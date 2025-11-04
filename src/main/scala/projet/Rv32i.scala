@@ -1,5 +1,5 @@
 package projet
-
+import projet.decode.TypeU
 import chisel3._
 
 class Rv32i(sim: Boolean = true) extends Module {
@@ -22,7 +22,6 @@ class Rv32i(sim: Boolean = true) extends Module {
   io.ibus.wdata := 0.U(32.W)
 
   val pc = RegInit(0.U(32.W))
-  locally(sim)
 
   // Read access on instruction bus
   io.ibus.en := true.B
@@ -30,6 +29,19 @@ class Rv32i(sim: Boolean = true) extends Module {
   io.ibus.addr := pc
 
   val instr = io.ibus.rdata
+
+  // Imm gestion for type U
+  val rd = TypeU.rd(instr)
+  val imm = TypeU.imm(instr)
+
+  // Registers module init
+  val rf = Module(new RFLUTRAM(sim))
+  // Stub the wires
+  rf.io.ra := 0.U
+  rf.io.rb := 0.U
+  rf.io.rw := rd
+  rf.io.w  := imm
+  rf.io.we := false.B
 
   io.x31 := instr
 
