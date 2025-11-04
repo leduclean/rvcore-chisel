@@ -2,7 +2,7 @@ COMMON_DIR  := common
 
 TOCLEAN = $(filter %log %.jou %.rpt %.mmi %.dcp %.csv\
                    %.wdb vivado% updatemem% usage_statistics_webtalk%,$(wildcard *))
-TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit 
+TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit
 
 # macro de verbosité
 VERB     := 0
@@ -19,9 +19,9 @@ check_vars = $(foreach v, $1, $(if $(filter undefined, $(origin $v)),\
 			$(MAKE) --no-print-directory help; \
 			exit 1; \
 		fi;))
- 
 
-all: help 
+
+all: help
 
 help:
 	@awk 'BEGIN {FS = ":.*##!"; printf "Usage: make \033[32m<commande>\033[0m \
@@ -37,11 +37,11 @@ help:
 ###############################################################################
 
 
-## Partie Compilation 
+## Partie Compilation
 
 BENCH_DIR := bench
 MEM_DIR := $(BENCH_DIR)/mem
-SRC_SW := $(wildcard $(BENCH_DIR)/*.s) 
+SRC_SW := $(wildcard $(BENCH_DIR)/*.s)
 SRC_SW += $(wildcard $(BENCH_DIR)/*.c) # Contient tous les .s et .c du projet
 MEM = $(addprefix $(MEM_DIR)/, $(addsuffix .mem, $(basename $(notdir $(SRC_SW))))) # Tous les .mem du projet
 PREFIX  := $(shell command -v riscv64-unknown-elf-gcc >/dev/null 2>&1 && echo riscv64-unknown-elf- || echo /matieres/3MMFMN/riscv32/bin/riscv32-unknown-elf-)
@@ -50,10 +50,10 @@ OBJDUMP := $(PREFIX)objdump
 OBTOMEM := common/objtomem.awk
 
 ## Flags
-ASFLAGS       :=-march=rv32i -mabi=ilp32 -ffreestanding -nostdlib -T $(BENCH_DIR)/link.ld 
+ASFLAGS       :=-march=rv32i -mabi=ilp32 -ffreestanding -nostdlib -T $(BENCH_DIR)/link.ld
 CFLAGS        :=$(ASFLAGS)
-ELFFLAGS      :=$(ASFLAGS) $(MEM_DIR)/crt.o -Os -fno-unroll-loops 
-ODFLAGS       :=-j .text -j .rodata -j .data -s 
+ELFFLAGS      :=$(ASFLAGS) $(MEM_DIR)/crt.o -Os -fno-unroll-loops
+ODFLAGS       :=-j .text -j .rodata -j .data -s
 
 .PRECIOUS: $(MEM_DIR)/%.elf
 
@@ -69,7 +69,7 @@ $(MEM_DIR)/%.elf: $(BENCH_DIR)/%.c $(MEM_DIR)/crt.o|$(MEM_DIR)
 $(MEM_DIR)/%.elf: $(BENCH_DIR)/%.s |$(MEM_DIR)
 	$(call q,\
 	$(CC) $(CFLAGS) -o $@ $<, "  Compilation $<",$@.log)
-$(MEM_DIR)/%.mem: $(MEM_DIR)/%.elf |$(MEM_DIR) 
+$(MEM_DIR)/%.mem: $(MEM_DIR)/%.elf |$(MEM_DIR)
 	$(call q,\
 	$(OBJDUMP) $(ODFLAGS) $< | awk -f $(OBTOMEM) | awk -f common/fix_mem.awk,"  Génération de $@",$@)
 
@@ -85,19 +85,19 @@ PATH_SRC    := src/main/scala/$(TOP_REP)
 TOP_TEST    := $(addsuffix Spec, $(TOP))
 
 CYCLES=500
-# Pour filtrer les tests dans une simulation 
+# Pour filtrer les tests dans une simulation
 ifdef PROG
 	FILTRE_TEST:= -- -z "$(PROG)"
 endif
 
 mill:
-	@curl -L https://raw.githubusercontent.com/lefou/millw/0.4.11/millw > mill 
+	@curl -L https://raw.githubusercontent.com/lefou/millw/0.4.11/millw > mill
 	@chmod +x mill
 
 autotest: mill compile ##! Lance la simulation automatique pour tous les tests ou juste celui fourni dans PROG
 	@PROOT=$(PWD) ./mill TPchisel.test.testOnly $(TOP_REP).$(TOP_TEST) $(FILTRE_TEST)
 
-simulation: compile ##! Lance gtkwave sur le test fourni dans PROG
+simulation: mill compile ##! Lance gtkwave sur le test fourni dans PROG
 	@$(call check_vars,PROG)
 	@PROOT=$(PWD) PROG=$(PROG) CYCLES=$(CYCLES) ./mill TPchisel.test.testOnly $(TOP_REP).$(TOP_TEST) -- -DemitVcd=1 -z "gtkwave"
 	@gtkwave -a common/config.gtkw ./build/chiselsim/ZzTopSpec/Simulation-pour-gtkwave/workdir-verilator/trace.vcd
@@ -106,7 +106,7 @@ simulation: compile ##! Lance gtkwave sur le test fourni dans PROG
 ###############################################################################
 
 
-##@ Passage sur carte 
+##@ Passage sur carte
 
 SRC         := $(wildcard $(PATH_SRC)/*.scala)
 SRC         += $(wildcard src/main/resources/vsrc/*.v)
@@ -126,11 +126,11 @@ PROG_HASH := $(shell echo "$(PROG)" | md5sum | cut -d' ' -f1)
 
 RTL: $(SRC_SV) ##! Génération du SystemVerilog
 
-$(SRC_SV): mill $(SRC) 
+$(SRC_SV): mill $(SRC)
 	$(call q, ./mill TPchisel.runMain common.EmitModule $(TOP_REP).$(TOP) $(PARAM) \
 	, "  Génération du SystemVerilog",/dev/null)
 
-$(TOP)_utilization.rpt $(TOP)_timing.rpt $(TOP)_summary.rpt: $(COMMON_DIR)/synthese.vivado.tcl RTL 
+$(TOP)_utilization.rpt $(TOP)_timing.rpt $(TOP)_summary.rpt: $(COMMON_DIR)/synthese.vivado.tcl RTL
 	@$(call check_vars,XILINX_VIVADO)
 	$(call q, \
 	    $(XILINX_PREFIX)vivado -nolog -nojournal -mode batch -source $< -tclargs $(FPGA) $(TOP) $(TOP_REP)\
@@ -182,5 +182,7 @@ fpga: download.bit $(COMMON_DIR)/programFPGA.vivado.tcl check_hw ##! Génére le
 	    , "  Programmation",prog.log )
 
 ##@ Nettoyage
+TMPREP = /scratch/$(LOGNAME)
 clean: ##! Fais le nettoyage
-	$(call q, rm -rf $(TOCLEAN),) 
+	$(call q, rm -rf $(TOCLEAN),)
+	@if [ -e $(TMPREP) ] && [ ! -d $(TMPREP) ]; then rm -f $(TMPREP) ;fi
