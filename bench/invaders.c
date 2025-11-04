@@ -132,11 +132,11 @@ static volatile uint32_t *timer_lo     = (volatile uint32_t *)CLINT_TIMER_LOW;
 static volatile uint32_t *timer_cmp_hi = (volatile uint32_t *)CLINT_TIMER_CMP_HI;
 static volatile uint32_t *timer_cmp_lo = (volatile uint32_t *)CLINT_TIMER_CMP_LO;
 
-uint32_t mult(uint64_t x, uint64_t y)
+uint64_t mult(uint32_t x, uint32_t y)
 {
    uint64_t res = 0;
    while (y != 0) {
-      if (y % 2 == 1) {
+      if (y & 1) {
          res += x;
       }
       x <<= 1;
@@ -148,7 +148,7 @@ uint32_t mult(uint64_t x, uint64_t y)
 void timer_set(uint32_t period, uint32_t time)
 {
     uint64_t now = *timer;
-    *timer_cmp = now + mult(((uint64_t)period >> 8), time);
+    *timer_cmp = now + mult(period >> 8, time);
 }
 
 void timer_wait(void)
