@@ -2,7 +2,7 @@ COMMON_DIR  := common
 
 TOCLEAN = $(filter %log %.jou %.rpt %.mmi %.dcp %.csv\
                    %.wdb vivado% updatemem% usage_statistics_webtalk%,$(wildcard *))
-TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit $(MEM_DIR)
+TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit
 
 # macro de verbosité
 VERB     := 0
