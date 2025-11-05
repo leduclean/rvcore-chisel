@@ -2,7 +2,7 @@ COMMON_DIR  := common
 
 TOCLEAN = $(filter %log %.jou %.rpt %.mmi %.dcp %.csv\
                    %.wdb vivado% updatemem% usage_statistics_webtalk%,$(wildcard *))
-TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit
+TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit $(MEM_DIR)
 
 # macro de verbosité
 VERB     := 0
@@ -71,7 +71,7 @@ $(MEM_DIR)/%.elf: $(BENCH_DIR)/%.s |$(MEM_DIR)
 	$(CC) $(CFLAGS) -o $@ $<, "  Compilation $<",$@.log)
 $(MEM_DIR)/%.mem: $(MEM_DIR)/%.elf |$(MEM_DIR)
 	$(call q,\
-	$(OBJDUMP) $(ODFLAGS) $< | awk -f $(OBTOMEM) | awk -f common/fix_mem.awk,"  Génération de $@",$@)
+	$(OBJDUMP) $(ODFLAGS) $< | awk -f $(OBTOMEM) | awk -f common/fix_mem.awk > $@)
 
 
 ###############################################################################
