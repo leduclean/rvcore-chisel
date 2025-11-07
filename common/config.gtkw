@@ -1,76 +1,51 @@
 [*]
-[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
-[*] Mon Nov  3 08:12:34 2025
+[*] GTKWave Analyzer v3.3.125 (w)1999-2025 BSI
+[*] Fri Nov  7 14:48:35 2025
 [*]
-[dumpfile] "/user/9/.base/mullero/home/cours/FMN/projet/build/chiselsim/ZzTopSpec/Simulation-pour-gtkwave/workdir-verilator/trace.vcd"
-[dumpfile_mtime] "Mon Nov  3 08:11:19 2025"
-[dumpfile_size] 59916
-[savefile] "/user/9/.base/mullero/home/cours/FMN/projet/common/config.gtkw"
+[dumpfile] "/home/lleduc/code/imag/risqv/build/chiselsim/ZzTopSpec/Simulation-pour-gtkwave/workdir-verilator/trace.vcd"
+[dumpfile_mtime] "Fri Nov  7 14:34:27 2025"
+[dumpfile_size] 36552
+[savefile] "/home/lleduc/code/imag/risqv/common/config.gtkw"
 [timestart] 0
-[size] 1920 1080
-[pos] -67 -33
-*-14.058537 52 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1908 1117
+[pos] -25 -22
+*-14.658537 32500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.svsimTestbench.
 [treeopen] TOP.svsimTestbench.dut.
 [treeopen] TOP.svsimTestbench.dut.core.
-[sst_width] 278
-[signals_width] 142
+[treeopen] TOP.svsimTestbench.dut.core.rf.
+[treeopen] TOP.svsimTestbench.dut.vmem.
+[sst_width] 290
+[signals_width] 150
 [sst_expanded] 1
-[sst_vpaned_height] 317
+[sst_vpaned_height] 340
 @200
 -Instruction
-@c04023
-^>1 /matieres/3MMFMN/riscv32/bin/spike-dasm
-TOP.svsimTestbench.dut.core.insn[31:0]
-@29
-(0)TOP.svsimTestbench.dut.core.insn[31:0]
-(1)TOP.svsimTestbench.dut.core.insn[31:0]
-(2)TOP.svsimTestbench.dut.core.insn[31:0]
-(3)TOP.svsimTestbench.dut.core.insn[31:0]
-(4)TOP.svsimTestbench.dut.core.insn[31:0]
-(5)TOP.svsimTestbench.dut.core.insn[31:0]
-(6)TOP.svsimTestbench.dut.core.insn[31:0]
-(7)TOP.svsimTestbench.dut.core.insn[31:0]
-(8)TOP.svsimTestbench.dut.core.insn[31:0]
-(9)TOP.svsimTestbench.dut.core.insn[31:0]
-(10)TOP.svsimTestbench.dut.core.insn[31:0]
-(11)TOP.svsimTestbench.dut.core.insn[31:0]
-(12)TOP.svsimTestbench.dut.core.insn[31:0]
-(13)TOP.svsimTestbench.dut.core.insn[31:0]
-(14)TOP.svsimTestbench.dut.core.insn[31:0]
-(15)TOP.svsimTestbench.dut.core.insn[31:0]
-(16)TOP.svsimTestbench.dut.core.insn[31:0]
-(17)TOP.svsimTestbench.dut.core.insn[31:0]
-(18)TOP.svsimTestbench.dut.core.insn[31:0]
-(19)TOP.svsimTestbench.dut.core.insn[31:0]
-(20)TOP.svsimTestbench.dut.core.insn[31:0]
-(21)TOP.svsimTestbench.dut.core.insn[31:0]
-(22)TOP.svsimTestbench.dut.core.insn[31:0]
-(23)TOP.svsimTestbench.dut.core.insn[31:0]
-(24)TOP.svsimTestbench.dut.core.insn[31:0]
-(25)TOP.svsimTestbench.dut.core.insn[31:0]
-(26)TOP.svsimTestbench.dut.core.insn[31:0]
-(27)TOP.svsimTestbench.dut.core.insn[31:0]
-(28)TOP.svsimTestbench.dut.core.insn[31:0]
-(29)TOP.svsimTestbench.dut.core.insn[31:0]
-(30)TOP.svsimTestbench.dut.core.insn[31:0]
-(31)TOP.svsimTestbench.dut.core.insn[31:0]
-@1401201
--group_end
+@28
+TOP.svsimTestbench.dut.core.rf.clock
+TOP.svsimTestbench.dut.core.reset
+@4022
+^>1 /home/lleduc/code/imag/risqv/spike-dasm
+TOP.svsimTestbench.dut.core.instr_log[31:0]
 @22
 TOP.svsimTestbench.dut.core.pc[31:0]
-TOP.svsimTestbench.dut.core.rd[4:0]
-TOP.svsimTestbench.dut.core.rs1Value[31:0]
-TOP.svsimTestbench.dut.core.rs2Value[31:0]
-TOP.svsimTestbench.dut.core.wbVal[31:0]
+TOP.svsimTestbench.dut.core.rf.io_w[31:0]
+@c00022
+TOP.svsimTestbench.dut.core.rf.io_rw[4:0]
 @28
-TOP.svsimTestbench.dut.core.clock
-TOP.svsimTestbench.dut.core.reset
+(0)TOP.svsimTestbench.dut.core.rf.io_rw[4:0]
+(1)TOP.svsimTestbench.dut.core.rf.io_rw[4:0]
+(2)TOP.svsimTestbench.dut.core.rf.io_rw[4:0]
+(3)TOP.svsimTestbench.dut.core.rf.io_rw[4:0]
+(4)TOP.svsimTestbench.dut.core.rf.io_rw[4:0]
+@1401200
+-group_end
+@28
+TOP.svsimTestbench.dut.core.rf.io_we
 @22
-TOP.svsimTestbench.dut.io_x31[31:0]
+TOP.svsimTestbench.dut.core.rf.io_w[31:0]
 @28
-TOP.svsimTestbench.dut.io_valid_x31
-TOP.svsimTestbench.dut.core.rdValid
+TOP.svsimTestbench.dut.core.rf.io_write_fire
 [pattern_trace] 1
 [pattern_trace] 0
