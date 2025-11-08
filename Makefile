@@ -32,7 +32,7 @@ help:
 	/^##@/ { printf "\n\033[36m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 
 
-.PHONY: synthese fpga clean compile autotest simulation
+.PHONY: synthese fpga clean compile autotest autotest-filter simulation
 
 ###############################################################################
 
@@ -96,6 +96,25 @@ mill:
 
 autotest: mill compile ##! Lance la simulation automatique pour tous les tests ou juste celui fourni dans PROG
 	@PROOT=$(PWD) ./mill TPchisel.test.testOnly $(TOP_REP).$(TOP_TEST) $(FILTRE_TEST)
+
+autotest-filter:  mill ##! Lance la simuation sur les tests spécifiés dans `ci-tests.txt`
+	@test -d bench/mem || { echo "bench/mem missing, run make compile first"; exit 1; }
+	@mkdir -p ci-logs
+ifeq ($(CI_RUN),1) ## On évite la dépendance de compilation imposée par make autotest en CI car déjà faite lors du build
+	@echo "Running in CI mode"
+	@xargs -I {} sh -c ' \
+	echo "Running {}"; \
+	PROOT=$$PWD ./mill TPchisel.test.testOnly $(TOP_REP).$(TOP_TEST) -- -z "{}" > ci-logs/{}.log 2>&1; \
+	if [ $$? -eq 0 ]; then \
+		echo "{} OK"; \
+	else \
+		echo "❌ {} failed (see ci-logs/{}.log)"; \
+		exit 1; \
+	fi' < ci-tests.txt
+else
+	@echo "Running in local mode"
+	@xargs -I {} sh -c 'echo "Running {}" && make autotest PROG="{}"' < ci-tests.txt
+endif
 
 simulation: mill compile ##! Lance gtkwave sur le test fourni dans PROG
 	@$(call check_vars,PROG)

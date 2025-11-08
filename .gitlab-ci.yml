@@ -1,0 +1,61 @@
+# Basic CI workflow with different jobs:
+# - build: Bench Compilation.
+# When ? On push only if src/ or bench/ files or `ci-tests.txt` changed and always on merge request.
+# - tests: Run the tests written in `ci-tests.txt`.
+# When ? On merge request, always
+
+image: ubuntu:24.04
+
+stages:
+  - build
+  - test
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+
+# Compile the tests files in bench/.
+build:
+  stage: build
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      # If the push changed bench/ files
+      changes:
+          - bench/*
+          - ci-tests.txt
+  script:
+    # Get deps.
+    - apt-get update -y
+    - apt-get install -y make gcc-riscv64-unknown-elf gawk
+
+    # Compilation
+    - make compile
+  artifacts:
+    paths:
+      - bench/mem
+    expire_in: 1 hour
+
+# Run the test described in `ci-tests.txt`.
+tests:
+  stage: test
+  needs:
+    - job: build
+      artifacts: true
+
+  script:
+    # Get deps.
+    - apt-get update -y
+    - apt-get install -y make g++ curl openjdk-17-jdk verilator
+
+    # Launch CI.
+    - make autotest-filter CI_RUN=1
+
+  # Logs of failed tests are saved in artifacts.
+  artifacts:
+    when: always
+    paths:
+      - ci-logs
+    expire_in: 1 day
+  rules:
+    # On merge request.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
