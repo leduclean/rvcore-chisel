@@ -2,6 +2,8 @@ package projet
 import projet.decode.Decode
 import projet.WriteBack
 import projet.Fetch
+import projet.AluAMuxSel
+import projet.AluBMuxSel
 // import projet.WbMuxSel
 import chisel3._
 
@@ -59,12 +61,18 @@ class Rv32i(sim: Boolean = true) extends Module {
   val controls = decode.io.control
 
   // ---------------------------- EXE -------------------------
-  // TODO Implement ALU control and mux
+  val alu = Module(new Alu)
+
+  // We execute the right operations, given the decode control signals.
+  alu.io.a := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
+  alu.io.b := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
+  alu.io.fn := controls.alu.fn
+
   // We create a new data Bundle with alu result and MemData.
   val data = Wire(new PipelineData)
   data.rw := decodeData.rw
   data.imm := decodeData.imm
-  data.aluRes := 0.U(32.W)
+  data.aluRes := alu.io.result
   // We stub memData because we don't support Mem loading yet.
   data.memData := 0.U(32.W)
 

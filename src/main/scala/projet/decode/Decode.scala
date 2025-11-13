@@ -1,4 +1,3 @@
-
 package projet.decode
 
 import chisel3._
@@ -46,6 +45,7 @@ class Decode extends Module {
       io.control.decode.invalid := true.B
     }
   }
+
 }
 
 // Decoder to get the Alu operation.

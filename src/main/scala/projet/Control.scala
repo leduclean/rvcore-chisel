@@ -14,7 +14,7 @@ object AluBMuxSel extends ChiselEnum {
     val IMM, RFB = Value
 }
 
-// Contol signals from the Decode Unit.
+// Control signals from the Decode Unit.
 class ControlAlu extends Bundle {
     val aSel = Output(AluAMuxSel())
     val bSel = Output(AluBMuxSel())
@@ -27,6 +27,7 @@ object WbMuxSel extends ChiselEnum {
 
 // The pipelined output signals from the Decode/Exec/Mem stage.
 class Control extends Bundle {
+    // Direct signals for the ALU
     val alu = new ControlAlu
     val decode = new ControlDecode
     // Pipelined output signals

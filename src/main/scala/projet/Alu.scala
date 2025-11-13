@@ -1,5 +1,7 @@
 package projet
 import chisel3._
+import chisel3.util._
+
 // UInt Wrapper of the operations of Alu.
 // We use it to Cast UInt into clear types of enum variant.
 object FnAlu extends ChiselEnum {
@@ -12,4 +14,45 @@ object FnAlu extends ChiselEnum {
     val AND  = Value(7.U)  // ANDI/AND
 
     val Unvalid = Value(15.U) // Not supported
+}
+
+
+// Alu object.
+class Alu extends Module {
+  val io = IO(new Bundle {
+    val fn = Input(FnAlu())            // Control signal to match the operation.
+    val a = Input(UInt(32.W))          // Upper input of the Alu.
+    val b = Input(UInt(32.W))          // Bottom input of the Alu.
+    val result = Output(UInt(32.W))    // Result from the Alu.
+  })
+
+  // Always give a default value
+  io.result := 0.U
+
+  switch(io.fn) {
+
+    is(FnAlu.ADD) {
+      io.result := io.a + io.b
+    }
+
+    is(FnAlu.SLT) {
+      io.result := (io.a.asSInt < io.b.asSInt).asUInt
+    }
+
+    is(FnAlu.SLTU) {
+      io.result := (io.a < io.b).asUInt
+    }
+
+    is(FnAlu.XOR) {
+      io.result := io.a ^ io.b
+    }
+
+    is(FnAlu.OR) {
+      io.result := io.a | io.b
+    }
+
+    is(FnAlu.AND) {
+      io.result := io.a & io.b
+    }
+  }
 }
