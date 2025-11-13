@@ -68,7 +68,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   io.x31 := rf.io.a
 
   // Handle invalid instructions
-  when (controls.wb.wbSel =/= WbMuxSel.INV) {
+  when (controls.decode.invalid) {
     pc := 0.U(32.W)
   } .otherwise {
     pc := pc + 4.U(32.W)

@@ -5,6 +5,8 @@ import chisel3.util._
 
 // OpCode consts.
 object OpCode {
+  // No instr loaded
+  val Nop   = "b0000000".U
   // Type U
   val Lui   = "b0110111".U
   val Auipc = "b0010111".U
@@ -17,13 +19,16 @@ object OpCode {
 
 // Enum variants for instruction type.
 object InstrType extends ChiselEnum {
-  val TypeU, TypeI, Default = Value
+  val TypeU, TypeI, Invalid, Nop = Value
 
   def getType(instr: UInt): InstrType.Type = {
     val op = instr(6,0)
-    val t = WireDefault(Default)
+    val t = WireDefault(Invalid)
 
     switch(op) {
+      is(OpCode.Nop) {
+        t := Nop
+      }
       // Type U
       is(OpCode.Lui, OpCode.Auipc) {
         t := TypeU

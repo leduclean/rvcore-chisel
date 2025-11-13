@@ -4,7 +4,6 @@ package projet.decode
 import chisel3._
 import chisel3.util._
 import projet.Control
-import projet.WbMuxSel
 
 class PipelineData extends Bundle {
   val rw = UInt(5.W)        // Write destination register
@@ -29,20 +28,22 @@ class Decode extends Module {
 
   val instrTy = InstrType.getType(io.instr)
   // Instruction matching.
-  switch (instrTy) {
+  switch(instrTy) {
+    is(InstrType.Nop) {
+      // We do nothing because no instruction loaded yet.
+    }
     is(InstrType.TypeU) {
       val (ctrl, data) = TypeU.decode(io.instr)
       io.control := ctrl
-      io.data    := data
+      io.data := data
     }
-    is (InstrType.TypeI) {
+    is(InstrType.TypeI) {
       val (ctrl, data) = TypeI.decode(io.instr)
       io.control := ctrl
-      io.data    := data
-
+      io.data := data
     }
-    is(InstrType.Default) {
-      io.control.wb.wbSel := WbMuxSel.INV
+    is(InstrType.Invalid) {
+      io.control.decode.invalid := true.B
     }
   }
 }

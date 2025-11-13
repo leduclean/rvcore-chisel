@@ -14,11 +14,8 @@ class WriteBack extends Module {
         val rfWrite = new RFWriteInterface // Controler of the write input of the RF.
     })
 
-    // We stub the connexions in all other case
-    // because we only support LUI for now
-    io.rfWrite.rw := 0.U(5.W)
-    io.rfWrite.w  := 0.U(5.W)
-    io.rfWrite.we := false.B
+    // Defaults
+    io.rfWrite := 0.U.asTypeOf(new RFWriteInterface)
 
     switch (io.control.wbSel) {
         is(WbMuxSel.IMM) {
@@ -27,7 +24,7 @@ class WriteBack extends Module {
             io.rfWrite.w := io.data.imm
         }
         is(WbMuxSel.INV) {
-            io.rfWrite.we := false.B
+            // We don't write back if it's an invalid instruction.
         }
         is(WbMuxSel.ALU) {
         // Not implemented

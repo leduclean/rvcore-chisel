@@ -28,8 +28,15 @@ object WbMuxSel extends ChiselEnum {
 // The pipelined output signals from the Decode/Exec/Mem stage.
 class Control extends Bundle {
     val alu = new ControlAlu
+    val decode = new ControlDecode
+    // Pipelined output signals
     val wb = new ControlWriteback
     val fetch = new ControlFetch
+}
+
+// Control signals for the Decode stage.
+class ControlDecode extends Bundle {
+  val invalid = Output(Bool())
 }
 
 // Control signals for the WriteBack stage.
