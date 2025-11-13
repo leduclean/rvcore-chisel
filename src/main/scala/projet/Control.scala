@@ -1,6 +1,31 @@
 package projet
-
 import chisel3._
+
+// Type for the required operation for the Alu
+object FnAlu extends ChiselEnum {
+    // Non exaustive
+    val ADD, SUB = Value
+}
+
+// We use ChiselEnum as a mux to simpify entry sel.
+// Alu mux for A input.
+object AluAMuxSel extends ChiselEnum {
+    val PC, RFA = Value
+
+}
+
+// We use ChiselEnum as a mux to simpify entry sel
+// Alu mux for B input.
+object AluBMuxSel extends ChiselEnum {
+    val IMM, RFB = Value
+}
+
+// Contol signals from the Decode Unit.
+class ControlAlu extends Bundle {
+    val aSel = Output(AluAMuxSel())
+    val bSel = Output(AluBMuxSel())
+    val f = Output(FnAlu())
+}
 
 object WbMuxSel extends ChiselEnum {
   val IMM, ALU, MEM, INV = Value
@@ -8,6 +33,7 @@ object WbMuxSel extends ChiselEnum {
 
 // The pipelined output signals from the Decode/Exec/Mem stage.
 class Control extends Bundle {
+    val alu = new ControlAlu
     val wb = new ControlWriteback
     val fetch = new ControlFetch
 }
