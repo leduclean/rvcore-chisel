@@ -2,6 +2,7 @@ package projet
 import projet.decode.DecodeUnit
 import projet.WriteBack
 import projet.Fetch
+// import projet.WbMuxSel
 import chisel3._
 
 class Rv32i(sim: Boolean = true) extends Module {
@@ -45,11 +46,12 @@ class Rv32i(sim: Boolean = true) extends Module {
   val dataReg = RegNext(decode.io.data)
   val controls = RegNext(decode.io.control)
 
-  // ------------------------- WRITE BACK -------------------------
+    // ------------------------- WRITE BACK -------------------------
   val wb = Module(new WriteBack)
+
   wb.io.control <> controls.wb
   wb.io.data <> dataReg
-  
+
   // Write Back handle the write interface of
   // rf so we interconnect it.
   wb.io.rfWrite <> rf.io.rfWrite
@@ -59,11 +61,16 @@ class Rv32i(sim: Boolean = true) extends Module {
   // We stub rb
   rf.io.rb := 0.U(32.W)
 
-  // We alignate valid to the signal for a x31 written value.
+  // We align valid to the signal for a x31 written value.
   if (sim) io.valid_x31.get := rf.io.write_fire.get
 
   // We connect x31 to first reading port
   io.x31 := rf.io.a
 
-  pc := pc + 4.U(32.W)
+  // Handle invalid instructions
+  when (controls.wb.wbSel =/= WbMuxSel.INV) {
+    pc := 0.U(32.W)
+  } .otherwise {
+    pc := pc + 4.U(32.W)
+  }
 }

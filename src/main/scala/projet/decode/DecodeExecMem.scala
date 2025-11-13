@@ -25,7 +25,6 @@ class DecodeUnit extends Module {
   io.control := 0.U.asTypeOf(new Control)
   io.data := 0.U.asTypeOf(new PipelineData)
 
-
   val instrTy = InstrType.getType(io.instr)
 
   // Instruction matching
@@ -37,6 +36,12 @@ class DecodeUnit extends Module {
         io.control.wb.wbSel := WbMuxSel.IMM
         io.control.wb.weRf := true.B
       }
+    }
+    is(InstrType.Default) {
+      io.data.rw := 0.U(5.W)
+      io.data.w := 0.U(32.W)
+      io.control.wb.wbSel := WbMuxSel.INV
+      io.control.wb.weRf := true.B
     }
   }
 }

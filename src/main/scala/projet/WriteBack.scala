@@ -26,6 +26,11 @@ class WriteBack extends Module {
             io.rfWrite.rw := io.data.rw
             io.rfWrite.w := io.data.w
         }
+        is(WbMuxSel.INV) {
+            io.rfWrite.we := io.control.weRf
+            io.rfWrite.rw := io.data.rw
+            io.rfWrite.w := io.data.w
+        }
         is(WbMuxSel.ALU) {
         // Not implemented
         }

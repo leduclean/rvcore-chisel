@@ -20,7 +20,6 @@ check_vars = $(foreach v, $1, $(if $(filter undefined, $(origin $v)),\
 			exit 1; \
 		fi;))
 
-
 all: help
 
 help:

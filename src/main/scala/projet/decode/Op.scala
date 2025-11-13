@@ -13,7 +13,6 @@ object OpCode {
 object InstrType extends ChiselEnum {
     val TypeU, Default = Value
 
-
   def getType(instr: UInt): InstrType.Type = {
     val op = instr(6,0)
     // Default

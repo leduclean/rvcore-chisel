@@ -3,7 +3,7 @@ package projet
 import chisel3._
 
 object WbMuxSel extends ChiselEnum {
-  val IMM, ALU, MEM = Value
+  val IMM, ALU, MEM, INV = Value
 }
 
 // The pipelined output signals from the Decode/Exec/Mem stage.
