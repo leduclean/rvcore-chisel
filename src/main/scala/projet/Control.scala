@@ -1,12 +1,6 @@
 package projet
 import chisel3._
 
-// Type for the required operation for the Alu
-object FnAlu extends ChiselEnum {
-    // Non exaustive
-    val ADD, SUB = Value
-}
-
 // We use ChiselEnum as a mux to simpify entry sel.
 // Alu mux for A input.
 object AluAMuxSel extends ChiselEnum {
@@ -24,7 +18,7 @@ object AluBMuxSel extends ChiselEnum {
 class ControlAlu extends Bundle {
     val aSel = Output(AluAMuxSel())
     val bSel = Output(AluBMuxSel())
-    val f = Output(FnAlu())
+    val fn = Output(FnAlu())
 }
 
 object WbMuxSel extends ChiselEnum {

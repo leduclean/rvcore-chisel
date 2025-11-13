@@ -24,12 +24,10 @@ class WriteBack extends Module {
         is(WbMuxSel.IMM) {
             io.rfWrite.we := io.control.weRf
             io.rfWrite.rw := io.data.rw
-            io.rfWrite.w := io.data.w
+            io.rfWrite.w := io.data.imm
         }
         is(WbMuxSel.INV) {
-            io.rfWrite.we := io.control.weRf
-            io.rfWrite.rw := io.data.rw
-            io.rfWrite.w := io.data.w
+            io.rfWrite.we := false.B
         }
         is(WbMuxSel.ALU) {
         // Not implemented

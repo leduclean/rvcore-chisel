@@ -1,5 +1,5 @@
 package projet
-import projet.decode.DecodeUnit
+import projet.decode.Decode
 import projet.WriteBack
 import projet.Fetch
 // import projet.WbMuxSel
@@ -39,7 +39,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   }
 
   // ------------------------- DECODE -------------------------
-  val decode = Module(new DecodeUnit)
+  val decode = Module(new Decode)
   decode.io.instr := instr
 
   // We pipeline the decoded writing signals.
