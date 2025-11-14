@@ -90,3 +90,37 @@ object TypeI {
         (ctrl, data)
     }
 }
+
+// We define an object for typeR instruction.
+object TypeR {
+    private def getRd(instr: UInt): UInt = instr(11, 7)
+    private def getRs1(instr: UInt): UInt = instr(19, 15)
+    private def getRs2(instr: UInt): UInt = instr(24, 20)
+    private def func3(instr: UInt): UInt = instr(14, 12)
+    private def func7(instr: UInt): UInt = instr(30)
+
+
+    // Decode function for typeR instructions.
+    def decode(instr: UInt): (Control, DecodeData) = {
+        val ctrl = Wire(new Control)
+        val data = Wire(new DecodeData)
+
+        // Default init
+        ctrl := 0.U.asTypeOf(new Control)
+        data := 0.U.asTypeOf(new DecodeData)
+
+        // Data
+        data.rw := getRd(instr)
+        data.rs1 := getRs1(instr)
+        data.rs2 := getRs2(instr)
+
+        // Control
+        ctrl.alu.aSel := AluAMuxSel.RFA
+        ctrl.alu.bSel := AluBMuxSel.RFB
+        ctrl.alu.fn := FnAluDecoder.fromFuncCode(Cat(func7(instr), func3(instr)))
+        ctrl.wb.wbSel := WbMuxSel.ALU
+        ctrl.wb.weRf  := true.B
+
+        (ctrl, data)
+    }
+}

@@ -5,17 +5,22 @@ import chisel3.util._
 // UInt Wrapper of the operations of Alu.
 // We use it to Cast UInt into clear types of enum variant.
 object FnAlu extends ChiselEnum {
-    // Non exaustive
-    val ADD  = Value(0.U)  // ADDI/ADD LB/LH/LW/LBU/LHU, JALR
-    val SLT  = Value(2.U)  // SLTI/SLT
-    val SLTU = Value(3.U)  // SLTIU/SLTU
-    val XOR  = Value(4.U)  // XORI/XOR
-    val OR   = Value(6.U)  // ORI/OR
-    val AND  = Value(7.U)  // ANDI/AND
+ // Non exaustive
+  val ADD  = Value(0.U)  // ADDI/ADD LB/LH/LW/LBU/LHU, JALR
+  val SLL  = Value(1.U)  // SLLI/SLL
+  val SLT  = Value(2.U)  // SLTI/SLT
+  val SLTU = Value(3.U)  // SLTIU/SLTU
+  val XOR  = Value(4.U)  // XORI/XOR
+  val SRL  = Value(5.U)  // SRLI/SRL
+  val OR   = Value(6.U)  // ORI/OR
+  val AND  = Value(7.U)  // ANDI/AND
 
-    val Unvalid = Value(15.U) // Not supported
+  // Special values determined by the single f7 byte code (instr(30)).
+  // We concatenate f7 single byte code and f3 byte code to obtain those.
+  val SUB = Value(8.U)   // SUB
+  val SRA = Value(13.U)  // SRAI/SRA
+  val Unvalid = Value(15.U) // Not supported
 }
-
 
 // Alu object.
 class Alu extends Module {
