@@ -4,3 +4,5 @@ build
 mill*
 .prog*
 bench/mem
+.metals/
+.vscode/
