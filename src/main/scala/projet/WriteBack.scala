@@ -2,7 +2,7 @@ package projet
 
 import projet.WbMuxSel
 import projet.ControlWriteback
-import projet.decode.PipelineData
+import projet.PipelineData
 import chisel3._
 import chisel3.util._
 

@@ -5,26 +5,26 @@ import chisel3._
 import chisel3.util._
 import projet.Control
 
-class PipelineData extends Bundle {
-  val rw = UInt(5.W)        // Write destination register
-  val imm = UInt(32.W)      // Imm from the decode
-  val rs1 = UInt(32.W)      // rs1 data
-  val aluRes  = UInt(32.W)  // result from Alu
-  val memData = UInt(32.W)  // result from Mem
-
+class DecodeData extends Bundle {
+  val rw  = UInt(5.W)  // Write back destination
+  val rs1 = UInt(32.W) // Register adress 1
+  val rs2 = UInt(32.W) // Register adress 2
+  val imm = UInt(32.W) // Extracted imm
 }
+
 
 // This module will be used for the whole DecodeExecMem pipeline stage.
 class Decode extends Module {
   val io = IO(new Bundle {
     val instr = Input(UInt(32.W)) // Instruction to decode
-    val control = new Control     // Control of the Decode stage
-    val data = new PipelineData   // Data of the Decode stage
+    val control = new Control    // Control of the Decode stage
+    val data = new DecodeData   // Data of the Decode stage
   })
 
   // Defaults
   io.control := 0.U.asTypeOf(new Control)
-  io.data := 0.U.asTypeOf(new PipelineData)
+  io.data := 0.U.asTypeOf(new DecodeData)
+  io.data.rs1 := 31.U
 
   val instrTy = InstrType.getType(io.instr)
   // Instruction matching.

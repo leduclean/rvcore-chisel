@@ -15,13 +15,13 @@ object TypeU {
     private def getImm(instr: UInt): UInt = Cat(instr(31, 12), 0.U(12.W))
 
     // Decode function for typeU instructions.
-    def decode(instr: UInt): (Control, PipelineData) = {
+    def decode(instr: UInt): (Control, DecodeData) = {
         val ctrl = Wire(new Control)
-        val data = Wire(new PipelineData)
+        val data = Wire(new DecodeData)
 
         ctrl := 0.U.asTypeOf(new Control)
-        data := 0.U.asTypeOf(new PipelineData)
-        
+        data := 0.U.asTypeOf(new DecodeData)
+
         // We force to 31 for test simulation.
         data.rs1 := 31.U(5.W)
 
@@ -57,13 +57,13 @@ object TypeI {
 
 
     // Decode function for typeI instructions.
-    def decode(instr: UInt): (Control, PipelineData) = {
+    def decode(instr: UInt): (Control, DecodeData) = {
         val ctrl = Wire(new Control)
-        val data = Wire(new PipelineData)
+        val data = Wire(new DecodeData)
 
         // Default init
         ctrl := 0.U.asTypeOf(new Control)
-        data := 0.U.asTypeOf(new PipelineData)
+        data := 0.U.asTypeOf(new DecodeData)
 
         // Invariants
         data.rw := getRd(instr)

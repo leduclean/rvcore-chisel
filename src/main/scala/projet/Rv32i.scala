@@ -5,6 +5,15 @@ import projet.Fetch
 // import projet.WbMuxSel
 import chisel3._
 
+// Bundle to pipe datas from the decode/Exec/Mem
+// stage to the write back stage.
+class PipelineData extends Bundle {
+  val rw = UInt(5.W)        // Write destination register
+  val imm = UInt(32.W)      // Imm from the decode
+  val aluRes  = UInt(32.W)  // result from Alu
+  val memData = UInt(32.W)  // result from Mem
+}
+
 class Rv32i(sim: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val ibus = Flipped(new BusInterface)
@@ -41,25 +50,36 @@ class Rv32i(sim: Boolean = true) extends Module {
   // ------------------------- DECODE -------------------------
   val decode = Module(new Decode)
   decode.io.instr := instr
+  // Reg read adress assignation from decode signals.
+  rf.io.ra := decode.io.data.rs1
+  rf.io.rb := decode.io.data.rs2
 
-  // We pipeline the decoded writing signals.
-  val dataReg = RegNext(decode.io.data)
-  val controls = RegNext(decode.io.control)
+  val pcReg = RegNext(pc)
+  val decodeData = decode.io.data
+  val controls = decode.io.control
 
-    // ------------------------- WRITE BACK -------------------------
+  // ---------------------------- EXE -------------------------
+  // TODO Implement ALU control and mux
+  // We create a new data Bundle with alu result and MemData.
+  val data = Wire(new PipelineData)
+  data.rw := decodeData.rw
+  data.imm := decodeData.imm
+  data.aluRes := 0.U(32.W)
+  // We stub memData because we don't support Mem loading yet.
+  data.memData := 0.U(32.W)
+
+  // We pipeline the data Bundle for the write back stage.
+  val dataReg = RegNext(data)
+  val controlsReg = RegNext(controls)
+  // ------------------------- WRITE BACK -------------------------
   val wb = Module(new WriteBack)
 
-  wb.io.control <> controls.wb
+  wb.io.control <> controlsReg.wb
   wb.io.data <> dataReg
 
   // Write Back handle the write interface of
   // rf so we interconnect it.
   wb.io.rfWrite <> rf.io.rfWrite
-
-  // We connect to x_31 for testing support
-  rf.io.ra := 31.U(5.W)
-  // We stub rb
-  rf.io.rb := 0.U(32.W)
 
   // We align valid to the signal for a x31 written value.
   if (sim) io.valid_x31.get := rf.io.write_fire.get
