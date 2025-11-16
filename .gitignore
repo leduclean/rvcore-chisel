@@ -6,3 +6,5 @@ mill*
 bench/mem
 .metals/
 .vscode/
+.bsp/
+.bloop/
