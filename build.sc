@@ -3,7 +3,11 @@ import mill._
 import mill.define.Sources
 import mill.modules.Util
 import mill.scalalib.TestModule.ScalaTest
-import scalalib._
+import mill.scalalib.scalafmt.ScalafmtModule
+import $ivy.`com.goyeau::mill-scalafix::0.5.0`
+import com.goyeau.mill.scalafix.ScalafixModule
+import mill.scalalib._
+import mill.scalalib.SbtModule
 // support BSP
 import mill.bsp._
 
@@ -25,7 +29,8 @@ object `TPchisel` extends SbtModule { m =>
     "-unchecked",
     "-Xfatal-warnings",
     "-Ywarn-dead-code",
-    "-Ywarn-unused"
+    "-Ywarn-unused",
+    "-Wunused:imports"
   )
   override def ivyDeps = Agg(
     ivy"org.chipsalliance::chisel:7.2.0"
@@ -43,4 +48,11 @@ object `TPchisel` extends SbtModule { m =>
 object scalafmt extends ScalafmtModule {
   override def moduleDeps = Seq(`TPchisel`)
   override def sources    = T.sources { TPchisel.sources() }
+}
+
+object scalafix extends ScalafixModule {
+  override def moduleDeps    = Seq(`TPchisel`)
+  override def sources       = T.sources { TPchisel.sources() }
+  override def scalaVersion  = T { TPchisel.scalaVersion() }
+  override def scalacOptions = T { TPchisel.scalacOptions() }
 }
