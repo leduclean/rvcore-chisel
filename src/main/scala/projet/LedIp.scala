@@ -1,17 +1,17 @@
 package projet
+
 import chisel3._
 import chisel3.util._
 
-/*\
- * Fusion de IP_LED et IP_PIN du projet VHDL
-\*/
+/* \ Fusion de IP_LED et IP_PIN du projet VHDL \ */
 class LedIp extends Module {
+
   val io = IO(new Bundle {
-    val x31 = Input(UInt(32.W)) 
+    val x31    = Input(UInt(32.W))
     val switch = Input(UInt(4.W))
-    val led = Output(UInt(4.W))
+    val led    = Output(UInt(4.W))
     val button = Input(UInt(3.W))
-    val bus = new BusInterface
+    val bus    = new BusInterface
   })
 
   io.bus.rdata := 0x01ed01ed.U // On lira ça si on lit !
@@ -23,10 +23,10 @@ class LedIp extends Module {
   // Le cpu fait une requête
   // On se moque de l'adresse ...
   // L'écriture écrit dans le registre, la lecture retourne l'état des boutons
-  when (io.bus.en === true.B) {
-    when (io.bus.be.asUInt.orR) { // Écriture dans le registre des leds internes
+  when(io.bus.en === true.B) {
+    when(io.bus.be.asUInt.orR) { // Écriture dans le registre des leds internes
       dinReg := io.bus.wdata
-    } .otherwise { // Lecture des boutons poussoirs, pas de débounce car lus par le soft
+    }.otherwise { // Lecture des boutons poussoirs, pas de débounce car lus par le soft
       btnReg := Fill(29, 0.U) ## io.button
     }
   }
@@ -42,5 +42,7 @@ class LedIp extends Module {
   io.led := MuxLookup(io.switch(2, 0), 0.U(4.W))(
     (0 until 8).map { i =>
       (i.U -> data((i * 4) + 3, i * 4))
-  })
+    }
+  )
+
 }

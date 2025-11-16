@@ -1,36 +1,37 @@
 package projet
-import projet.decode.Decode
-import projet.WriteBack
-import projet.Fetch
+
+import chisel3._
 import projet.AluAMuxSel
 import projet.AluBMuxSel
-// import projet.WbMuxSel
-import chisel3._
+import projet.Fetch
+import projet.WriteBack
+import projet.decode.Decode
 
 // Bundle to pipe datas from the decode/Exec/Mem
 // stage to the write back stage.
 class PipelineData extends Bundle {
-  val rw = UInt(5.W)        // Write destination register
-  val imm = UInt(32.W)      // Imm from the decode
-  val aluRes  = UInt(32.W)  // result from Alu
-  val memData = UInt(32.W)  // result from Mem
+  val rw      = UInt(5.W)  // Write destination register
+  val imm     = UInt(32.W) // Imm from the decode
+  val aluRes  = UInt(32.W) // result from Alu
+  val memData = UInt(32.W) // result from Mem
 }
 
 class Rv32i(sim: Boolean = true) extends Module {
+
   val io = IO(new Bundle {
-    val ibus = Flipped(new BusInterface)
-    val dbus = Flipped(new BusInterface)
-    val x31 = Output(UInt(32.W))
-    val valid_x31  = if (sim)  Some(Output(Bool())) else None
+    val ibus      = Flipped(new BusInterface)
+    val dbus      = Flipped(new BusInterface)
+    val x31       = Output(UInt(32.W))
+    val valid_x31 = if (sim) Some(Output(Bool())) else None
   })
 
   // Registers module init
   val rf = Module(new RFLUTRAM(sim))
 
   // Connecting all wires
-  io.dbus.en := false.B
-  io.dbus.be := VecInit.fill(4)(false.B)
-  io.dbus.addr := 0.U(32.W)
+  io.dbus.en    := false.B
+  io.dbus.be    := VecInit.fill(4)(false.B)
+  io.dbus.addr  := 0.U(32.W)
   io.dbus.wdata := 0.U(32.W)
 
   val pc = RegInit(0.U(32.W))
@@ -56,28 +57,28 @@ class Rv32i(sim: Boolean = true) extends Module {
   rf.io.ra := decode.io.data.rs1
   rf.io.rb := decode.io.data.rs2
 
-  val pcReg = RegNext(pc)
+  val pcReg      = RegNext(pc)
   val decodeData = decode.io.data
-  val controls = decode.io.control
+  val controls   = decode.io.control
 
   // ---------------------------- EXE -------------------------
   val alu = Module(new Alu)
 
   // We execute the right operations, given the decode control signals.
-  alu.io.a := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
-  alu.io.b := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
+  alu.io.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
+  alu.io.b  := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
   alu.io.fn := controls.alu.fn
 
   // We create a new data Bundle with alu result and MemData.
   val data = Wire(new PipelineData)
-  data.rw := decodeData.rw
-  data.imm := decodeData.imm
+  data.rw     := decodeData.rw
+  data.imm    := decodeData.imm
   data.aluRes := alu.io.result
   // We stub memData because we don't support Mem loading yet.
   data.memData := 0.U(32.W)
 
   // We pipeline the data Bundle for the write back stage.
-  val dataReg = RegNext(data)
+  val dataReg     = RegNext(data)
   val controlsReg = RegNext(controls)
   // ------------------------- WRITE BACK -------------------------
   val wb = Module(new WriteBack)
@@ -96,9 +97,10 @@ class Rv32i(sim: Boolean = true) extends Module {
   io.x31 := rf.io.a
 
   // Handle invalid instructions
-  when (controls.decode.invalid) {
+  when(controls.decode.invalid) {
     pc := 0.U(32.W)
-  } .otherwise {
+  }.otherwise {
     pc := pc + 4.U(32.W)
   }
+
 }

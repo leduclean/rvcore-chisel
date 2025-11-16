@@ -11,21 +11,22 @@ class DecodeData extends Bundle {
   val imm = UInt(32.W) // Extracted imm
 }
 
-
 // This module will be used for the whole DecodeExecMem pipeline stage.
 class Decode extends Module {
+
   val io = IO(new Bundle {
-    val instr = Input(UInt(32.W)) // Instruction to decode
-    val control = new Control    // Control of the Decode stage
-    val data = new DecodeData   // Data of the Decode stage
+    val instr   = Input(UInt(32.W)) // Instruction to decode
+    val control = new Control       // Control of the Decode stage
+    val data    = new DecodeData    // Data of the Decode stage
   })
 
   // Defaults
-  io.control := 0.U.asTypeOf(new Control)
-  io.data := 0.U.asTypeOf(new DecodeData)
+  io.control  := 0.U.asTypeOf(new Control)
+  io.data     := 0.U.asTypeOf(new DecodeData)
   io.data.rs1 := 31.U
 
   val instrTy = InstrType.getType(io.instr)
+
   // Instruction matching.
   switch(instrTy) {
     is(InstrType.Nop) {
@@ -34,7 +35,7 @@ class Decode extends Module {
     is(InstrType.TypeU) {
       val (ctrl, data) = TypeU.decode(io.instr)
       io.control := ctrl
-      io.data := data
+      io.data    := data
     }
     is(InstrType.TypeI) {
       val (ctrl, data) = TypeI.decode(io.instr)
@@ -71,4 +72,5 @@ object FnAluDecoder {
     }
     fn
   }
+
 }

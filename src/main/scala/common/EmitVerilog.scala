@@ -1,10 +1,10 @@
 package common
 
-import chisel3._
 import _root_.circt.stage.ChiselStage
-
+import chisel3._
 
 object EmitModule {
+
   def main(args: Array[String]): Unit = {
     if (args.length < 1) {
       println("Usage: mill ... common.EmitModule <ModuleName> [constructor args...]")
@@ -12,10 +12,10 @@ object EmitModule {
     }
 
     val moduleName = args(0)
-    val ctorArgs = args.drop(1) // reste des arguments (strings)
+    val ctorArgs   = args.drop(1) // reste des arguments (strings)
 
     // Reflection scala : charger dynamiquement un module
-    val cls = Class.forName(moduleName)
+    val cls  = Class.forName(moduleName)
     val ctor = cls.getConstructors.head
 
     // Fonction de conversion string -> objet typé
@@ -49,4 +49,5 @@ object EmitModule {
       args = Array("--target-dir", s"RTL/$moduleName")
     )
   }
+
 }
