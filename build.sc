@@ -15,27 +15,32 @@ import mill.bsp._
 
 object `TPchisel` extends SbtModule { m =>
   override def millSourcePath = super.millSourcePath / os.up
-  override def scalaVersion = "2.13.16"
-  override def scalacOptions = Seq(
+  override def scalaVersion   = "2.13.16"
+  override def scalacOptions  = Seq(
     "-language:reflectiveCalls",
     "-deprecation",
     "-feature",
     "-Xcheckinit",
     "-Ymacro-annotations",
     "-unchecked",
-	"-Xfatal-warnings", 
-	"-Ywarn-dead-code", 
-	"-Ywarn-unused" 
+    "-Xfatal-warnings",
+    "-Ywarn-dead-code",
+    "-Ywarn-unused"
   )
   override def ivyDeps = Agg(
-    ivy"org.chipsalliance::chisel:7.2.0",
+    ivy"org.chipsalliance::chisel:7.2.0"
   )
   override def scalacPluginIvyDeps = Agg(
-    ivy"org.chipsalliance:::chisel-plugin:7.2.0",
+    ivy"org.chipsalliance:::chisel-plugin:7.2.0"
   )
   object test extends SbtTests with TestModule.ScalaTest {
     override def ivyDeps = m.ivyDeps() ++ Agg(
       ivy"org.scalatest::scalatest::3.2.19"
     )
   }
+}
+
+object scalafmt extends ScalafmtModule {
+  override def moduleDeps = Seq(`TPchisel`)
+  override def sources    = T.sources { TPchisel.sources() }
 }
