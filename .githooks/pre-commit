@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+echo "Running pre-commit hook"
+
+# We get staged files
+FILES=$(git diff --cached --name-only -- '*.scala')
+
+if [ -n "$FILES" ]; then
+  # Verify Scalafix
+  if ! ./mill scalafix.fix --check; then
+    echo "Scalafix rules violated, fixing..."
+    # We run scalafix on the whole project.
+    # (Impossible to target only one file)
+    ./mill scalafix.fix
+  fi
+
+  # Verify Scalafmt
+  if ! ./mill scalafmt.checkFormat; then
+    # We run scalafmt on the whole project.
+    # (Impossible to target only one file)
+    echo "Scalafmt rules violated, formatting..."
+    ./mill scalafmt.reformat
+  fi
+
+    # We add the staged files again.
+    git add $FILES
+fi

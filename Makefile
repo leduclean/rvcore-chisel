@@ -35,6 +35,11 @@ help:
 
 ###############################################################################
 
+## GIT
+## On installe les git hooks
+git-hook: ##! Install git hooks
+	@git config core.hooksPath .githooks
+	@echo "Git hooks installed"
 
 ## Partie Compilation
 
