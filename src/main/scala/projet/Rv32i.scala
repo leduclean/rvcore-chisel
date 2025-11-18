@@ -65,9 +65,9 @@ class Rv32i(sim: Boolean = true) extends Module {
   val alu = Module(new Alu)
 
   // We execute the right operations, given the decode control signals.
-  alu.io.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
-  alu.io.b  := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
-  alu.io.fn := controls.alu.fn
+  alu.io.input.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
+  alu.io.input.b  := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
+  alu.io.input.fn := controls.alu.fn
 
   // We create a new data Bundle with alu result and MemData.
   val data = Wire(new PipelineData)
