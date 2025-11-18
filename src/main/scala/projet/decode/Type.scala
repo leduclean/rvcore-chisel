@@ -47,7 +47,7 @@ object TypeU {
 
 }
 
-// We define an object for typeI instruction.
+// We define an object for typeI and TypeIR instructions.
 object TypeI {
   private def getOp(instr: UInt): UInt  = instr(6, 0)
   private def getRd(instr: UInt): UInt  = instr(11, 7)
@@ -55,6 +55,10 @@ object TypeI {
   // Sign extension to construct imm.
   private def getImm(instr: UInt): UInt = Cat(Fill(20, instr(31)), instr(31, 20))
   private def func3(instr: UInt): UInt  = instr(14, 12)
+
+  // Suport for shift Type (TypeIR) with IMM.
+  private def shamt(instr: UInt): UInt = instr(24, 20)
+  private def func7(instr: UInt): UInt = instr(30)
 
   // Decode function for typeI instructions.
   def decode(instr: UInt): (Control, DecodeData) = {
@@ -72,11 +76,16 @@ object TypeI {
 
     switch(getOp(instr)) {
       is(OpCode.Imm) {
+        // Detect shift instructions for IMM (SLLI, SRLI, SRAI).
+        val isShift = func3(instr) === "b001".U || func3(instr) === "b101".U
+        // Adapt Func code in consequence.
+        val code = Mux(isShift, Cat(func7(instr), func3(instr)), func3(instr))
         ctrl.alu.aSel := AluAMuxSel.RFA
         ctrl.alu.bSel := AluBMuxSel.IMM
-        ctrl.alu.fn   := FnAluDecoder.fromFuncCode(func3(instr))
+        ctrl.alu.fn   := FnAluDecoder.fromFuncCode(code)
         ctrl.wb.wbSel := WbMuxSel.ALU
-        data.imm      := getImm(instr)
+        // We evaluate the immediate value differently if it's a shift.
+        data.imm := Mux(isShift, shamt(instr), getImm(instr))
       }
 
       is(OpCode.Load) {

@@ -14,7 +14,8 @@ object OpCode {
   // Type I
   val Load = "b0000011".U // LB, LH, LW, LBU, LHU
   val Jalr = "b1100111".U // JALR
-  val Imm  = "b0010011".U // ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI
+  // Type I and IR
+  val Imm = "b0010011".U // ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI
 
   // Type R
   val RType = "b0110011".U // ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND
