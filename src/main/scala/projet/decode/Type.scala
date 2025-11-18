@@ -22,9 +22,6 @@ object TypeU {
     ctrl := 0.U.asTypeOf(new Control)
     data := 0.U.asTypeOf(new DecodeData)
 
-    // We force to 31 for test simulation.
-    data.rs1 := 31.U(5.W)
-
     // Invariants
     ctrl.wb.weRf := true.B
     data.rw      := getRd(instr)

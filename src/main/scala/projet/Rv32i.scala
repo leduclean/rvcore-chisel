@@ -91,10 +91,13 @@ class Rv32i(sim: Boolean = true) extends Module {
   wb.io.rfWrite <> rf.io.rfWrite
 
   // We align valid to the signal for a x31 written value.
-  if (sim) io.valid_x31.get := rf.io.write_fire.get
-
-  // We connect x31 to first reading port
-  io.x31 := rf.io.a
+  if (sim) {
+    io.valid_x31.get := rf.io.write_fire.get
+    io.x31           := rf.io.x31.get
+  } else {
+    // Default
+    io.x31 := 0.U
+  }
 
   // Handle invalid instructions
   when(controls.decode.invalid) {

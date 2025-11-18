@@ -19,6 +19,8 @@ class RFLUTRAM(sim: Boolean = false) extends Module {
     val b       = Output(UInt(32.W))
     // Output signal to signalize a write on register x31
     val write_fire = if (sim) Some(Output(Bool())) else None
+    // Direct Access to register x31 without an input dependence.
+    val x31 = if (sim) Some(Output(UInt(32.W))) else None
   })
 
   val regs        = Mem(32, UInt(32.W))
@@ -45,6 +47,7 @@ class RFLUTRAM(sim: Boolean = false) extends Module {
     // The value is readable 1 cycle after it has been written
     val delayed_fire = RegNext(write_cond && destination === 31.U(5.W), false.B)
     io.write_fire.foreach(_ := delayed_fire)
+    io.x31.foreach(_ := regs(31.U))
   }
 
 }
