@@ -1,3 +1,4 @@
 lui
 invalid
 auipc
+typeI
