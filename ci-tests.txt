@@ -2,3 +2,4 @@ lui
 invalid
 auipc
 typeI
+typeR
