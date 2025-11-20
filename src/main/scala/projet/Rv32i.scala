@@ -100,7 +100,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   }
 
   // Handle invalid instructions
-  when(controls.decode.invalid) {
+  when(controls.pc.invalid) {
     pc := 0.U(32.W)
   }.otherwise {
     pc := pc + 4.U(32.W)

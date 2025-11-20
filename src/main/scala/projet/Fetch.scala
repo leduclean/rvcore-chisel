@@ -2,16 +2,14 @@ package projet
 
 import chisel3._
 import projet.BusInterface
-import projet.ControlFetch
 
 // Fetch pipeline stage
 class Fetch extends Module {
 
   val io = IO(new Bundle {
-    val pc      = Input(UInt(32.W))
-    val ibus    = Flipped(new BusInterface)
-    val control = Flipped(new ControlFetch)
-    val instr   = Output(UInt(32.W))
+    val pc    = Input(UInt(32.W))
+    val ibus  = Flipped(new BusInterface)
+    val instr = Output(UInt(32.W))
   })
 
   io.ibus.wdata := 0.U(32.W)

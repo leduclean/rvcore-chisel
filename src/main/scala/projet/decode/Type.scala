@@ -79,8 +79,12 @@ object TypeI {
         val code = Mux(isShift, Cat(func7(instr), func3(instr)), func3(instr))
         ctrl.alu.aSel := AluAMuxSel.RFA
         ctrl.alu.bSel := AluBMuxSel.IMM
-        ctrl.alu.fn   := FnAluDecoder.fromFuncCode(code)
-        ctrl.wb.wbSel := WbMuxSel.ALU
+
+        // We cast the func code into Fn Alu type.
+        val (fn, valid) = FnAlu.safe(code)
+        ctrl.alu.fn     := fn
+        ctrl.pc.invalid := !valid
+        ctrl.wb.wbSel   := WbMuxSel.ALU
         // We evaluate the immediate value differently if it's a shift.
         data.imm := Mux(isShift, shamt(instr), getImm(instr))
       }
@@ -123,9 +127,13 @@ object TypeR {
     // Control
     ctrl.alu.aSel := AluAMuxSel.RFA
     ctrl.alu.bSel := AluBMuxSel.RFB
-    ctrl.alu.fn   := FnAluDecoder.fromFuncCode(Cat(func7(instr), func3(instr)))
-    ctrl.wb.wbSel := WbMuxSel.ALU
-    ctrl.wb.weRf  := true.B
+
+    // We cast the func code into Fn Alu type.
+    val (fn, valid) = FnAlu.safe(Cat(func7(instr), func3(instr)))
+    ctrl.alu.fn     := fn
+    ctrl.pc.invalid := !valid
+    ctrl.wb.wbSel   := WbMuxSel.ALU
+    ctrl.wb.weRf    := true.B
 
     (ctrl, data)
   }

@@ -21,9 +21,8 @@ class Decode extends Module {
   })
 
   // Defaults
-  io.control  := 0.U.asTypeOf(new Control)
-  io.data     := 0.U.asTypeOf(new DecodeData)
-  io.data.rs1 := 31.U
+  io.control := 0.U.asTypeOf(new Control)
+  io.data    := 0.U.asTypeOf(new DecodeData)
 
   val instrTy = InstrType.getType(io.instr)
 
@@ -48,29 +47,8 @@ class Decode extends Module {
       io.data    := data
     }
     is(InstrType.Invalid) {
-      io.control.decode.invalid := true.B
+      io.control.pc.invalid := true.B
     }
-  }
-
-}
-
-// Decoder to get the Alu operation.
-object FnAluDecoder {
-  import projet.FnAlu
-
-  // Get the FnAlu.Type from a func code.
-  // Typical func codes:
-  // - raw f3
-  // - Cat(f7, f3)
-  def fromFuncCode(code: UInt): FnAlu.Type = {
-    val fn = WireDefault(FnAlu.Unvalid)
-    // We try to down cast the code to our FnAlu Chisel enum.
-    // If the cast is unvalid, we return the Unvalid behaviour.
-    val (value, valid) = FnAlu.safe(code)
-    when(valid) {
-      fn := value
-    }
-    fn
   }
 
 }
