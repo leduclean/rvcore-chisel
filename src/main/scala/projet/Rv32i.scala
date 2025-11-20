@@ -1,6 +1,7 @@
 package projet
 
 import chisel3._
+import chisel3.util.Fill
 import projet.AluAMuxSel
 import projet.AluBMuxSel
 import projet.Fetch
@@ -25,8 +26,12 @@ class Rv32i(sim: Boolean = true) extends Module {
     val valid_x31 = if (sim) Some(Output(Bool())) else None
   })
 
-  // Registers module init
-  val rf = Module(new RFLUTRAM(sim))
+  // Module init
+  val decode = Module(new Decode)
+  val alu    = Module(new Alu)
+  val rf     = Module(new RFLUTRAM(sim))
+  val wb     = Module(new WriteBack)
+  val fetch  = Module(new Fetch)
 
   // Connecting all wires
   io.dbus.en    := false.B
@@ -34,35 +39,38 @@ class Rv32i(sim: Boolean = true) extends Module {
   io.dbus.addr  := 0.U(32.W)
   io.dbus.wdata := 0.U(32.W)
 
-  val pc = RegInit(0.U(32.W))
-
   // ------------------------- FETCH -------------------------
-  val fetch = Module(new Fetch)
-  fetch.io.pc := pc
-  // Fetch handle the ibus so we interconnect the interface.
   fetch.io.ibus <> io.ibus
   val instr = fetch.io.instr
+  // ------------------------- DECODE -------------------------
+  // `isNop` depends of the previous instruction decode so we use a reg.
+  val isNop    = RegInit(false.B)
+  val nopInstr = Fill(32, 0.U)
+
+  // If the previous instruction decoded was a branch
+  // or a jump next instruction should be a `Nop`.
+  val decodeInstr = Mux(isNop, nopInstr, instr)
 
   // log: only for DEBUG and Simulation
   if (sim) {
     val instr_log = Wire(UInt(32.W))
-    instr_log := instr
+    instr_log := decodeInstr
     dontTouch(instr_log)
   }
 
-  // ------------------------- DECODE -------------------------
-  val decode = Module(new Decode)
-  decode.io.instr := instr
+  decode.io.instr := decodeInstr
+  // We get the controls from the decode part.
+  val controls = decode.io.control
+
   // Reg read adress assignation from decode signals.
   rf.io.ra := decode.io.data.rs1
   rf.io.rb := decode.io.data.rs2
 
-  val pcReg      = RegNext(pc)
+  // pcReg is the pc value from the current decoded instruction.
+  val pcReg      = RegNext(fetch.io.pcOut)
   val decodeData = decode.io.data
-  val controls   = decode.io.control
 
   // ---------------------------- EXE -------------------------
-  val alu = Module(new Alu)
 
   // We execute the right operations, given the decode control signals.
   alu.io.input.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
@@ -77,13 +85,25 @@ class Rv32i(sim: Boolean = true) extends Module {
   // We stub memData because we don't support Mem loading yet.
   data.memData := 0.U(32.W)
 
-  // We pipeline the data Bundle for the write back stage.
-  val dataReg     = RegNext(data)
-  val controlsReg = RegNext(controls)
-  // ------------------------- WRITE BACK -------------------------
-  val wb = Module(new WriteBack)
+  // Feed fetch PC ctrl with the jump and branch conditions.
+  // We stub the branch condition (not yet supported)
+  fetch.io.branchTaken  := false.B
+  fetch.io.branchTarget := 0.U
 
-  wb.io.control <> controlsReg.wb
+  fetch.io.ctrl <> controls.pc
+
+  fetch.io.jumpTarget := 0.U // TODO change to the right jump target.
+
+  // If we jump or we branch, the next instruction is going to be a Nop
+  isNop := controls.pc.doJump
+
+  // We pipeline data and controls for the write back stage.
+  val dataReg       = RegNext(data)
+  val wbcontrolsReg = RegNext(controls.wb)
+
+  // ------------------------- WRITE BACK -------------------------
+
+  wb.io.control <> wbcontrolsReg
   wb.io.data <> dataReg
 
   // Write Back handle the write interface of
@@ -97,13 +117,6 @@ class Rv32i(sim: Boolean = true) extends Module {
   } else {
     // Default
     io.x31 := 0.U
-  }
-
-  // Handle invalid instructions
-  when(controls.pc.invalid) {
-    pc := 0.U(32.W)
-  }.otherwise {
-    pc := pc + 4.U(32.W)
   }
 
 }
