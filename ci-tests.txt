@@ -3,3 +3,4 @@ invalid
 auipc
 typeI
 typeR
+typeB
