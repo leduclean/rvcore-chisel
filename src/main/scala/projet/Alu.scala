@@ -62,21 +62,34 @@ class Logic extends Module {
 
 }
 
+// Signals for the cond branch motion.
+class CompSignals extends Bundle {
+  val eq    = Output(Bool()) // equal
+  val less  = Output(Bool()) // Strict less than (signed)
+  val uless = Output(Bool()) // Strict less that (not signed)
+}
+
 class Comp extends Module {
 
   val io = IO(new Bundle {
-    val input  = new AluInput()
-    val result = Output(UInt(32.W))
+    val input   = new AluInput()
+    val result  = Output(UInt(32.W))
+    val signals = new CompSignals // signals for cond branch
   })
 
-  when(io.input.fn === FnAlu.SLT) {
-    val ai = io.input.a.asSInt
-    val bi = io.input.b.asSInt
+  val ai = io.input.a.asSInt
+  val bi = io.input.b.asSInt
 
-    io.result := Mux(ai < bi, 1.U(32.W), 0.U(32.W))
+  // We set the condition for cond branch.
+  io.signals.eq    := (io.input.a === io.input.b)
+  io.signals.less  := (ai < bi)
+  io.signals.uless := (io.input.a < io.input.b)
+
+  when(io.input.fn === FnAlu.SLT) {
+    io.result := Mux(io.signals.less, 1.U(32.W), 0.U(32.W))
   }.otherwise {
     io.result := Mux(
-      io.input.a < io.input.b,
+      io.signals.uless,
       1.U(32.W),
       0.U(32.W)
     )
@@ -113,8 +126,9 @@ class Shift extends Module {
 class Alu extends Module {
 
   val io = IO(new Bundle {
-    val input  = new AluInput()
-    val result = Output(UInt(32.W))
+    val input   = new AluInput()
+    val result  = Output(UInt(32.W))
+    val signals = new CompSignals()
   })
 
   val addsub = Module(new AddSub)
@@ -162,5 +176,7 @@ class Alu extends Module {
       io.result := shift.io.result
     }
   }
+
+  io.signals := comp.io.signals
 
 }

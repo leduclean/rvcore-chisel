@@ -22,6 +22,11 @@ class ControlAlu extends Bundle {
   val fn   = Output(FnAlu())
 }
 
+// Control signals from the Decode Unit for the branch cond computation.
+class ControlBranch extends Bundle {
+  val ty = Output(BranchType())
+}
+
 object WbMuxSel extends ChiselEnum {
   val IMM, ALU, MEM, INV = Value
 }
@@ -42,8 +47,9 @@ class ControlWriteback extends Bundle {
 // Global pipelined output signals from the Decode stage.
 class Control extends Bundle {
   // Direct signals for the ALU
-  val alu = new ControlAlu
-  val pc  = new ControlPc
+  val alu    = new ControlAlu
+  val branch = new ControlBranch
+  val pc     = new ControlPc
   // Pipelined output signals
   val wb = new ControlWriteback
 }

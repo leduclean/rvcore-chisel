@@ -46,6 +46,11 @@ class Decode extends Module {
       io.control := ctrl
       io.data    := data
     }
+    is(InstrType.TypeB) {
+      val (ctrl, data) = TypeB.decode(io.instr)
+      io.control := ctrl
+      io.data    := data
+    }
     is(InstrType.Invalid) {
       io.control.pc.invalid := true.B
     }

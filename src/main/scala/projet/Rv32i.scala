@@ -28,6 +28,7 @@ class Rv32i(sim: Boolean = true) extends Module {
 
   // Module init
   val decode = Module(new Decode)
+  val branch = Module(new BranchCond)
   val alu    = Module(new Alu)
   val rf     = Module(new RFLUTRAM(sim))
   val wb     = Module(new WriteBack)
@@ -85,17 +86,20 @@ class Rv32i(sim: Boolean = true) extends Module {
   // We stub memData because we don't support Mem loading yet.
   data.memData := 0.U(32.W)
 
-  // Feed fetch PC ctrl with the jump and branch conditions.
-  // We stub the branch condition (not yet supported)
-  fetch.io.branchTaken  := false.B
-  fetch.io.branchTarget := 0.U
+  // Branch cond computation.
+  branch.io.ty         := controls.branch.ty
+  branch.io.aluSignals := alu.io.signals
 
+  // Feed fetch PC ctrl with the jump and branch targets.
+  fetch.io.branchTaken  := branch.io.branchTaken
+  fetch.io.branchTarget := pcReg + decodeData.imm
+  fetch.io.jumpTarget   := 0.U // TODO change to the right jump target.
+
+  // Connect control signals.
   fetch.io.ctrl <> controls.pc
 
-  fetch.io.jumpTarget := 0.U // TODO change to the right jump target.
-
   // If we jump or we branch, the next instruction is going to be a Nop
-  isNop := controls.pc.doJump
+  isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken)
 
   // We pipeline data and controls for the write back stage.
   val dataReg       = RegNext(data)

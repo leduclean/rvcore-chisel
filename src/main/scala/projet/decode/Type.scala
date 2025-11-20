@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import projet.AluAMuxSel
 import projet.AluBMuxSel
+import projet.BranchType
 import projet.Control
 import projet.FnAlu
 import projet.WbMuxSel
@@ -135,6 +136,44 @@ object TypeR {
     ctrl.wb.wbSel   := WbMuxSel.ALU
     ctrl.wb.weRf    := true.B
 
+    (ctrl, data)
+  }
+
+}
+
+// We define an object for typeB instruction.
+object TypeB {
+  private def getRs1(instr: UInt): UInt = instr(19, 15)
+  private def getRs2(instr: UInt): UInt = instr(24, 20)
+  private def func3(instr: UInt): UInt  = instr(14, 12)
+
+  // Sign extension to construct Imm.
+  private def getImm(instr: UInt): UInt =
+    Cat(Fill(19, instr(31)), instr(31), instr(7), instr(30, 25), instr(11, 8), 0.U(1.W))
+
+  // Decode function for typeB instructions.
+  def decode(instr: UInt): (Control, DecodeData) = {
+    val ctrl = Wire(new Control)
+    val data = Wire(new DecodeData)
+
+    // Default init
+    ctrl := 0.U.asTypeOf(new Control)
+    data := 0.U.asTypeOf(new DecodeData)
+
+    // Data
+    data.rs1 := getRs1(instr)
+    data.rs2 := getRs2(instr)
+    data.imm := getImm(instr)
+
+    // Control
+    ctrl.pc.isBranchInstr := true.B
+    ctrl.alu.aSel         := AluAMuxSel.RFA
+    ctrl.alu.bSel         := AluBMuxSel.RFB
+
+    // We cast the func code into Fn Alu type.
+    val (ty, valid) = BranchType.safe(func3(instr))
+    ctrl.branch.ty  := ty
+    ctrl.pc.invalid := !valid
     (ctrl, data)
   }
 

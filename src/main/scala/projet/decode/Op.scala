@@ -19,16 +19,18 @@ object OpCode {
 
   // Type R
   val RType = "b0110011".U // ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND
+
+  // Type B
+  val BType = "b1100011".U // BEQ, BNE, BLT, BGE, BLTU, BGEU
 }
 
 // Enum variants for instruction type.
 object InstrType extends ChiselEnum {
-  val TypeU, TypeI, TypeR, Invalid, Nop = Value
+  val TypeU, TypeI, TypeR, TypeB, Invalid, Nop = Value
 
   def getType(instr: UInt): InstrType.Type = {
     val op = instr(6, 0)
     val t  = WireDefault(Invalid)
-
     switch(op) {
       is(OpCode.Nop) {
         t := Nop
@@ -43,6 +45,9 @@ object InstrType extends ChiselEnum {
       }
       is(OpCode.RType) {
         t := TypeR
+      }
+      is(OpCode.BType) {
+        t := TypeB
       }
     }
     t
