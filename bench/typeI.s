@@ -6,8 +6,6 @@
 # In this test file, we test the maximum value
 # for an immediate on 12 bits: (-2048, 2047).
 
-# No bypass implemented yet, so insert a `nop` to wait one cycle
-# and ensure the previous instruction's result is ready before use.
 
     .text
     # --- ADDI ---
@@ -33,36 +31,29 @@
 
     # --- SLLI ---
     addi x1, x0, 1
-    nop
     slli x31, x1, 0
     slli x31, x1, 31
 
     # --- SRLI ---
     addi x2, x0, -1
-    nop
     srli x31, x2, 0
     srli x31, x2, 31
 
     # --- SRAI ---
     addi x3, x0, -1
-    nop
     srai x31, x3, 0
     srai x31, x3, 31
 
     # --- SLTI ---
     addi x4, x0, 5
-    nop
     slti x31, x4, 10
     slti x31, x4, -1
     addi x5, x0, 0
-    nop
     slti x31, x5, -2048
 
     # --- SLTIU ---
     addi x6, x0, 5
-    nop
     sltiu x31, x6, 10
     sltiu x31, x6, -1
     addi x7, x0, 0
-    nop
     sltiu x31, x7, -1

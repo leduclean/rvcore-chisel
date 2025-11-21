@@ -5,17 +5,13 @@
 # We use signed number on 32 bits so the extremums
 # values are (+0x7FFFFFFF, - 0x80000000)
 
-# No bypass implemented yet, so insert a `nop` to wait one cycle
-# and ensure the previous instruction's result is ready before use.
 
     .text
 
     # We set up extremums values on x1 and x2.
     lui x1, 0x80000
     lui x2, 0x80000
-    nop
     addi x1, x1, -1
-    nop
 
 
     # --- ADD ---
@@ -40,7 +36,6 @@
 
     # --- SLL ---
     addi x3, x0, 1
-    nop
     sll x31, x3, x1
     sll x31, x3, x0
 

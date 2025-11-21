@@ -2,6 +2,7 @@ package projet
 
 import chisel3._
 import chisel3.util.Fill
+import chisel3.util.MuxLookup
 import projet.AluAMuxSel
 import projet.AluBMuxSel
 import projet.DMem
@@ -12,9 +13,8 @@ import projet.decode.Decode
 // Bundle to pipe datas from the Decode/Exe
 // stage to the write back stage.
 class ExWbPipelineData extends Bundle {
-  val rw     = UInt(5.W)  // Write destination register
-  val imm    = UInt(32.W) // Imm from the decode
-  val aluRes = UInt(32.W) // result from Alu
+  val rd    = UInt(5.W)  // Write destination register
+  val value = UInt(32.W) // result from Alu or IMM extracted in EX
 }
 
 class Rv32i(sim: Boolean = true) extends Module {
@@ -70,18 +70,30 @@ class Rv32i(sim: Boolean = true) extends Module {
 
   // Pipelined data between Execute and write back.
   val dataExReg = RegInit(0.U.asTypeOf(new ExWbPipelineData))
+
   // Pipelined controls between Execute and write back.
   val wbcontrolsReg = RegNext(controls.wb)
 
+  // ByPass value determination: depends on the origin of the previous write back computation.
+  val bypassVal = Mux(wbcontrolsReg.wbSel === WbMuxSel.MEM, mem.io.out, dataExReg.value)
+
+  // ByPass for rs1 and rs2 (condition: previous instruction was a register write).
+  val rs1ByPass = Mux(wbcontrolsReg.weRf && rf.io.ra === dataExReg.rd, bypassVal, rf.io.a)
+  val rs2ByPass = Mux(wbcontrolsReg.weRf && rf.io.rb === dataExReg.rd, bypassVal, rf.io.b)
+
   // We execute the right operations, given the decode control signals.
-  alu.io.input.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
-  alu.io.input.b  := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
+  alu.io.input.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rs1ByPass)
+  alu.io.input.b  := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rs2ByPass)
   alu.io.input.fn := controls.alu.fn
 
-  // We aliment the data from Ex
-  dataExReg.rw     := decodeData.rw
-  dataExReg.imm    := decodeData.imm
-  dataExReg.aluRes := alu.io.result
+  val exOutput = MuxLookup(controls.wb.wbSel, alu.io.result)(Seq(
+    WbMuxSel.ALU -> alu.io.result,
+    WbMuxSel.IMM -> decodeData.imm
+  ))
+
+  // We pipeline rd from
+  dataExReg.rd    := decodeData.rw
+  dataExReg.value := exOutput
 
   // Branch cond computation.
   branch.io.ty         := controls.branch.ty
@@ -101,7 +113,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   // Mem computation
   mem.io.dbus <> io.dbus
   mem.io.ctrl <> controls.mem
-  mem.io.addr := alu.io.result
+  mem.io.addr := exOutput
   mem.io.din  := decode.io.data.rs2
 
   // ------------------------- WRITE BACK -------------------------
