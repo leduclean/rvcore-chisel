@@ -3,14 +3,19 @@ package projet
 import chisel3._
 import chisel3.util._
 import projet.ControlWriteback
-import projet.PipelineData
+import projet.ExWbPipelineData
 import projet.WbMuxSel
+
+class WbData extends Bundle {
+  val pipe    = Flipped(new ExWbPipelineData) // Pipelined data from the Ex stage
+  val memData = Input(UInt(32.W))                    // Direct data from the Mem stage
+}
 
 class WriteBack extends Module {
 
   val io = IO(new Bundle {
     val control = Flipped(new ControlWriteback) // Control signals.
-    val data    = Flipped(new PipelineData)     // Data to write back.
+    val data    = new WbData()                  // Data to write back.
     val rfWrite = new RFWriteInterface          // Controler of the write input of the RF.
   })
 
@@ -23,13 +28,13 @@ class WriteBack extends Module {
     }
     is(WbMuxSel.IMM) {
       io.rfWrite.we := io.control.weRf
-      io.rfWrite.rw := io.data.rw
-      io.rfWrite.w  := io.data.imm
+      io.rfWrite.rw := io.data.pipe.rw
+      io.rfWrite.w  := io.data.pipe.imm
     }
     is(WbMuxSel.ALU) {
       io.rfWrite.we := io.control.weRf
-      io.rfWrite.rw := io.data.rw
-      io.rfWrite.w  := io.data.aluRes
+      io.rfWrite.rw := io.data.pipe.rw
+      io.rfWrite.w  := io.data.pipe.aluRes
     }
     is(WbMuxSel.MEM) {
       // Not implemented

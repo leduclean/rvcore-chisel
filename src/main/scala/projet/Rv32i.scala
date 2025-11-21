@@ -8,13 +8,12 @@ import projet.Fetch
 import projet.WriteBack
 import projet.decode.Decode
 
-// Bundle to pipe datas from the decode/Exec/Mem
+// Bundle to pipe datas from the Decode/Exe
 // stage to the write back stage.
-class PipelineData extends Bundle {
-  val rw      = UInt(5.W)  // Write destination register
-  val imm     = UInt(32.W) // Imm from the decode
-  val aluRes  = UInt(32.W) // result from Alu
-  val memData = UInt(32.W) // result from Mem
+class ExWbPipelineData extends Bundle {
+  val rw     = UInt(5.W)  // Write destination register
+  val imm    = UInt(32.W) // Imm from the decode
+  val aluRes = UInt(32.W) // result from Alu
 }
 
 class Rv32i(sim: Boolean = true) extends Module {
@@ -67,24 +66,29 @@ class Rv32i(sim: Boolean = true) extends Module {
   rf.io.ra := decode.io.data.rs1
   rf.io.rb := decode.io.data.rs2
 
+// ---------------------------- EXE -------------------------
+
   // pcReg is the pc value from the current decoded instruction.
   val pcReg      = RegNext(fetch.io.pcOut)
   val decodeData = decode.io.data
 
-  // ---------------------------- EXE -------------------------
+  // Pipelined data between Execute and write back.
+  val dataExReg = RegInit(0.U.asTypeOf(new ExWbPipelineData))
+  // Pipelined controls between Execute and write back.
+  val wbcontrolsReg = RegNext(controls.wb)
 
   // We execute the right operations, given the decode control signals.
   alu.io.input.a  := Mux(controls.alu.aSel === AluAMuxSel.PC, pcReg, rf.io.a)
   alu.io.input.b  := Mux(controls.alu.bSel === AluBMuxSel.IMM, decodeData.imm, rf.io.b)
   alu.io.input.fn := controls.alu.fn
 
-  // We create a new data Bundle with alu result and MemData.
-  val data = Wire(new PipelineData)
-  data.rw     := decodeData.rw
-  data.imm    := decodeData.imm
-  data.aluRes := alu.io.result
+  // We aliment the data from Ex
+  dataExReg.rw     := decodeData.rw
+  dataExReg.imm    := decodeData.imm
+  dataExReg.aluRes := alu.io.result
+
   // We stub memData because we don't support Mem loading yet.
-  data.memData := 0.U(32.W)
+  val memData = 0.U(32.W)
 
   // Branch cond computation.
   branch.io.ty         := controls.branch.ty
@@ -101,14 +105,12 @@ class Rv32i(sim: Boolean = true) extends Module {
   // If we jump or we branch, the next instruction is going to be a Nop
   isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken)
 
-  // We pipeline data and controls for the write back stage.
-  val dataReg       = RegNext(data)
-  val wbcontrolsReg = RegNext(controls.wb)
 
   // ------------------------- WRITE BACK -------------------------
 
   wb.io.control <> wbcontrolsReg
-  wb.io.data <> dataReg
+  wb.io.data.pipe <> dataExReg
+  wb.io.data.memData := memData
 
   // Write Back handle the write interface of
   // rf so we interconnect it.
