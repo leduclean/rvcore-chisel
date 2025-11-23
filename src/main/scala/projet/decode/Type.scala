@@ -7,6 +7,7 @@ import projet.AluBMuxSel
 import projet.BranchType
 import projet.Control
 import projet.FnAlu
+import projet.MemType
 import projet.WbMuxSel
 
 // We define an object for typeU instruction.
@@ -68,9 +69,8 @@ object TypeI {
     data := 0.U.asTypeOf(new DecodeData)
 
     // Invariants
-    data.rw      := getRd(instr)
-    data.rs1     := getRs1(instr)
-    ctrl.wb.weRf := true.B
+    data.rw  := getRd(instr)
+    data.rs1 := getRs1(instr)
 
     switch(getOp(instr)) {
       is(OpCode.Imm) {
@@ -85,13 +85,30 @@ object TypeI {
         val (fn, valid) = FnAlu.safe(code)
         ctrl.alu.fn     := fn
         ctrl.pc.invalid := !valid
+        ctrl.wb.weRf    := valid
         ctrl.wb.wbSel   := WbMuxSel.ALU
         // We evaluate the immediate value differently if it's a shift.
         data.imm := Mux(isShift, shamt(instr), getImm(instr))
       }
 
       is(OpCode.Load) {
-        // Not Yet implemented
+        ctrl.wb.wbSel := WbMuxSel.MEM
+        // We use the alu to calculate the Addr
+        ctrl.alu.aSel := AluAMuxSel.RFA
+        ctrl.alu.bSel := AluBMuxSel.IMM
+
+        // We cast the func code into MemSize type.
+        // We use `safe` to return a `valid` boolean value
+        // that indicate weither the variant size exists or not.
+        val (ty, valid) = MemType.safe(func3(instr))
+        ctrl.mem.ty := ty
+        // We block memory access and RF write if invalid instr.
+        ctrl.mem.en     := true.B && valid
+        ctrl.wb.weRf    := valid
+        ctrl.pc.invalid := !valid
+
+        data.imm := getImm(instr)
+
       }
 
       is(OpCode.Jalr) {
