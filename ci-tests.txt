@@ -1,6 +1,7 @@
 lui
 invalid
 auipc
-typeI
+typeI_ALU
+typeI_Load
 typeR
 typeB
