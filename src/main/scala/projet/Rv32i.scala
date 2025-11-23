@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util.Fill
 import projet.AluAMuxSel
 import projet.AluBMuxSel
+import projet.DMem
 import projet.Fetch
 import projet.WriteBack
 import projet.decode.Decode
@@ -29,15 +30,10 @@ class Rv32i(sim: Boolean = true) extends Module {
   val decode = Module(new Decode)
   val branch = Module(new BranchCond)
   val alu    = Module(new Alu)
+  val mem    = Module(new DMem)
   val rf     = Module(new RFLUTRAM(sim))
   val wb     = Module(new WriteBack)
   val fetch  = Module(new Fetch)
-
-  // Connecting all wires
-  io.dbus.en    := false.B
-  io.dbus.be    := VecInit.fill(4)(false.B)
-  io.dbus.addr  := 0.U(32.W)
-  io.dbus.wdata := 0.U(32.W)
 
   // ------------------------- FETCH -------------------------
   fetch.io.ibus <> io.ibus
@@ -87,9 +83,6 @@ class Rv32i(sim: Boolean = true) extends Module {
   dataExReg.imm    := decodeData.imm
   dataExReg.aluRes := alu.io.result
 
-  // We stub memData because we don't support Mem loading yet.
-  val memData = 0.U(32.W)
-
   // Branch cond computation.
   branch.io.ty         := controls.branch.ty
   branch.io.aluSignals := alu.io.signals
@@ -105,12 +98,17 @@ class Rv32i(sim: Boolean = true) extends Module {
   // If we jump or we branch, the next instruction is going to be a Nop
   isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken)
 
+  // Mem computation
+  mem.io.dbus <> io.dbus
+  mem.io.ctrl <> controls.mem
+  mem.io.addr := alu.io.result
+  mem.io.din  := decode.io.data.rs2
 
   // ------------------------- WRITE BACK -------------------------
 
   wb.io.control <> wbcontrolsReg
   wb.io.data.pipe <> dataExReg
-  wb.io.data.memData := memData
+  wb.io.data.memData := mem.io.out
 
   // Write Back handle the write interface of
   // rf so we interconnect it.

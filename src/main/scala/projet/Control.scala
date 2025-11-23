@@ -27,6 +27,13 @@ class ControlBranch extends Bundle {
   val ty = Output(BranchType())
 }
 
+// Control signals for MEM from the decode Unit.
+class ControlMem extends Bundle {
+  val ty = Output(MemType())
+  val en = Output(Bool())
+  val we = Output(Bool())
+}
+
 object WbMuxSel extends ChiselEnum {
   val IMM, ALU, MEM, INV = Value
 }
@@ -49,6 +56,7 @@ class Control extends Bundle {
   // Direct signals for the ALU
   val alu    = new ControlAlu
   val branch = new ControlBranch
+  val mem    = new ControlMem
   val pc     = new ControlPc
   // Pipelined output signals
   val wb = new ControlWriteback
