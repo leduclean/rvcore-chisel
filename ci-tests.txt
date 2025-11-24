@@ -5,3 +5,5 @@ typeI_ALU
 typeI_Load
 typeR
 typeB
+typeJ
+jalr

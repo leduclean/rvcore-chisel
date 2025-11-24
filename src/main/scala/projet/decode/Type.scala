@@ -112,7 +112,17 @@ object TypeI {
       }
 
       is(OpCode.Jalr) {
-        // Not Yet implemented
+        ctrl.alu.aSel := AluAMuxSel.PC
+        ctrl.alu.bSel := AluBMuxSel.IMM
+        ctrl.alu.fn   := FnAlu.ADD
+        ctrl.wb.wbSel := WbMuxSel.ALU
+        ctrl.wb.weRf  := true.B
+        data.imm      := 4.U
+
+        data.offset := getImm(instr)
+
+        ctrl.pc.relativeJump := false.B
+        ctrl.pc.doJump       := true.B
       }
     }
     (ctrl, data)
@@ -191,6 +201,42 @@ object TypeB {
     val (ty, valid) = BranchType.safe(func3(instr))
     ctrl.branch.ty  := ty
     ctrl.pc.invalid := !valid
+    (ctrl, data)
+  }
+
+}
+
+// Object for type J instructions
+object TypeJ {
+  private def getRd(instr: UInt): UInt = instr(11, 7)
+
+  private def getImm(instr: UInt): UInt = {
+    Cat(Fill(12, instr(31)), instr(19, 12), instr(20), instr(30, 21), 0.U)
+  }
+
+  def decode(instr: UInt): (Control, DecodeData) = {
+    val ctrl = Wire(new Control)
+    val data = Wire(new DecodeData)
+
+    // Default
+    ctrl := 0.U.asTypeOf(new Control)
+    data := 0.U.asTypeOf(new DecodeData)
+
+    // rd = PC + 4
+    data.rw       := getRd(instr)
+    ctrl.alu.aSel := AluAMuxSel.PC
+    ctrl.alu.bSel := AluBMuxSel.IMM
+    ctrl.alu.fn   := FnAlu.ADD
+    ctrl.wb.wbSel := WbMuxSel.ALU
+    ctrl.wb.weRf  := true.B
+    data.imm      := 4.U
+
+    // (Ugly?) trick to calculate the value to put inside rd using the ALU and the new PC manually
+    data.offset := getImm(instr)
+
+    ctrl.pc.relativeJump := true.B
+    ctrl.pc.doJump       := true.B
+
     (ctrl, data)
   }
 

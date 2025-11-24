@@ -42,6 +42,7 @@ object WbMuxSel extends ChiselEnum {
 class ControlPc extends Bundle {
   val isBranchInstr = Bool()
   val doJump        = Bool()
+  val relativeJump  = Bool()
   val invalid       = Bool()
 }
 

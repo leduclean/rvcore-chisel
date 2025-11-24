@@ -102,7 +102,12 @@ class Rv32i(sim: Boolean = true) extends Module {
   // Feed fetch PC ctrl with the jump and branch targets.
   fetch.io.branchTaken  := branch.io.branchTaken
   fetch.io.branchTarget := pcReg + decodeData.imm
-  fetch.io.jumpTarget   := 0.U // TODO change to the right jump target.
+
+  fetch.io.jumpTarget   := Mux(
+    controls.pc.relativeJump,
+    pcReg + decodeData.offset,
+    rs1ByPass + decodeData.offset
+  ) // Relative jump is `jal`
 
   // Connect control signals.
   fetch.io.ctrl <> controls.pc
