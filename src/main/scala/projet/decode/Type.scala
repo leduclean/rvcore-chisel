@@ -6,6 +6,7 @@ import projet.AluAMuxSel
 import projet.AluBMuxSel
 import projet.BranchType
 import projet.Control
+import projet.CsrCmd
 import projet.FnAlu
 import projet.MemType
 import projet.WbMuxSel
@@ -241,6 +242,7 @@ object TypeS {
   private def func3(instr: UInt): UInt  = instr(14, 12)
   private def getImm(instr: UInt): UInt = Cat(Fill(20, instr(31)), instr(31, 25), instr(11, 7))
 
+
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -265,6 +267,45 @@ object TypeS {
     ctrl.mem.we := valid
     ctrl.mem.en := valid
 
+    (ctrl, data)
+  }
+
+}
+
+object TypeCsr {
+  private def getRd(instr: UInt): UInt  = instr(11, 7)
+  private def getRs1(instr: UInt): UInt = instr(19, 15)
+  private def func3(instr: UInt): UInt  = instr(14, 12)
+  // Zero extension of the imm[4:0]
+  private def getImm(instr: UInt): UInt = instr(19, 15).zext(32)
+  private def getCsr(instr: UInt): UInt = instr(31, 20)
+
+  def decode(instr: UInt): (Control, DecodeData) = {
+    val ctrl = Wire(new Control)
+    val data = Wire(new DecodeData)
+
+    // Default init
+    ctrl := 0.U.asTypeOf(new Control)
+    data := 0.U.asTypeOf(new DecodeData)
+
+    // Data
+    data.rw  := getRd(instr)
+    data.rs1 := getRs1(instr)
+    data.imm := getImm(instr)
+    data.csr := getCsr(instr)
+
+    // Control
+    val f3 = func3(instr)
+    // We can deduce the csrCmd only from the two lower bytes.
+    val cmdCode = f3(1, 0)
+    // MSB give the flag for IMM usage.
+    val useImm = f3(2)
+
+    // We cast the cmd code into Csr Cmd type.
+    val (cmd, valid) = CsrCmd.safe(cmdCode)
+    ctrl.csr.csrCmd := cmd
+    ctrl.csr.useImm := useImm
+    ctrl.pc.invalid := !valid
     (ctrl, data)
   }
 

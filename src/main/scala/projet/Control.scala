@@ -27,6 +27,12 @@ class ControlBranch extends Bundle {
   val ty = Output(BranchType())
 }
 
+// Control signals from the Decode Unit for Csr computation
+class ControlCsr extends Bundle {
+  val csrCmd = Output(CsrCmd())
+  val useImm = Output(Bool())
+}
+
 // Control signals for MEM from the decode Unit.
 class ControlMem extends Bundle {
   val ty = Output(MemType())
@@ -56,6 +62,7 @@ class Control extends Bundle {
   // Direct signals for the ALU
   val alu    = new ControlAlu
   val branch = new ControlBranch
+  val csr    = new ControlCsr
   val mem    = new ControlMem
   val pc     = new ControlPc
   // Pipelined output signals

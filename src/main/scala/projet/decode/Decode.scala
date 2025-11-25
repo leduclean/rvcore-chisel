@@ -9,6 +9,7 @@ class DecodeData extends Bundle {
   val rs1 = UInt(32.W) // Register adress 1
   val rs2 = UInt(32.W) // Register adress 2
   val imm = UInt(32.W) // Extracted imm
+  val csr = UInt(12.W) // Csr source/dest
 }
 
 // This module will be used for the whole DecodeExecMem pipeline stage.

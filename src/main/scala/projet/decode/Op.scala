@@ -28,12 +28,14 @@ object OpCode {
 
   // Type S
   val SType = "b0100011".U // SB, SH, SW
+
+  // SYSTEM/ Insntruction type
+  val CsrType = "b1110011".U // CSRRW / CSRRS / CSRRC/ CSRRWI / CSRRSI / CSRRCI / MRET
 }
 
 // Enum variants for instruction type.
 object InstrType extends ChiselEnum {
-  val TypeU, TypeI, TypeR, TypeB, TypeJ, TypeS, Invalid, Nop = Value
-
+  val TypeU, TypeI, TypeR, TypeB, TypeJ, TypeS, TypeCsr, Invalid, Nop = Value
   def getType(instr: UInt): InstrType.Type = {
     val op = instr(6, 0)
     val t  = WireDefault(Invalid)
@@ -60,6 +62,9 @@ object InstrType extends ChiselEnum {
       }
       is(OpCode.SType) {
         t := TypeS
+      }
+      is(OpCode.CsrType) {
+        t := TypeCsr
       }
     }
     t
