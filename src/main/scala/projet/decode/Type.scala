@@ -161,7 +161,7 @@ object TypeR {
     ctrl.alu.fn     := fn
     ctrl.pc.invalid := !valid
     ctrl.wb.wbSel   := WbMuxSel.ALU
-    ctrl.wb.weRf    := true.B
+    ctrl.wb.weRf    := valid
 
     (ctrl, data)
   }
