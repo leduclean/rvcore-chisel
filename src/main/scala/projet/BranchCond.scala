@@ -1,7 +1,7 @@
 package projet
 
 import chisel3._
-import chisel3.util.MuxCase
+import chisel3.util.MuxLookup
 import projet.CompSignals
 
 // Branch Type matchin enum.
@@ -23,16 +23,13 @@ class BranchIO extends Bundle {
 class BranchCond extends Module {
   val io = IO(new BranchIO)
 
-  io.branchTaken := MuxCase(
-    false.B,
-    Seq(
-      (io.ty === BranchType.BEQ)  -> io.aluSignals.eq,
-      (io.ty === BranchType.BNE)  -> !io.aluSignals.eq,
-      (io.ty === BranchType.BLT)  -> io.aluSignals.less,
-      (io.ty === BranchType.BGE)  -> !io.aluSignals.less,
-      (io.ty === BranchType.BLTU) -> io.aluSignals.uless,
-      (io.ty === BranchType.BGEU) -> !io.aluSignals.uless
-    )
-  )
+  io.branchTaken := MuxLookup(io.ty, false.B)(Seq(
+    BranchType.BEQ  -> io.aluSignals.eq,
+    BranchType.BNE  -> !io.aluSignals.eq,
+    BranchType.BLT  -> io.aluSignals.less,
+    BranchType.BGE  -> !io.aluSignals.less,
+    BranchType.BLTU -> io.aluSignals.uless,
+    BranchType.BGEU -> !io.aluSignals.uless
+  ))
 
 }

@@ -36,12 +36,7 @@ class AddSub extends Module {
     val result = Output(UInt(32.W))
   })
 
-  when(io.input.fn === FnAlu.ADD) {
-    io.result := io.input.a + io.input.b
-  }.otherwise {
-    io.result := io.input.a - io.input.b
-  }
-
+  io.result := Mux(io.input.fn === FnAlu.ADD, io.input.a + io.input.b, io.input.a - io.input.b)
 }
 
 class Logic extends Module {
@@ -51,14 +46,11 @@ class Logic extends Module {
     val result = Output(UInt(32.W))
   })
 
-  io.result := MuxCase(
-    0.U,
-    Seq(
-      (io.input.fn === FnAlu.OR)  -> (io.input.a | io.input.b),
-      (io.input.fn === FnAlu.AND) -> (io.input.a & io.input.b),
-      (io.input.fn === FnAlu.XOR) -> (io.input.a ^ io.input.b)
-    )
-  )
+  io.result := MuxLookup(io.input.fn, 0.U)(Seq(
+    FnAlu.OR  -> (io.input.a | io.input.b),
+    FnAlu.AND -> (io.input.a & io.input.b),
+    FnAlu.XOR -> (io.input.a ^ io.input.b)
+  ))
 
 }
 
@@ -106,19 +98,16 @@ class Shift extends Module {
 
   val tb = io.input.b(4, 0)
 
-  io.result := MuxCase(
-    0.U,
-    Seq(
-      (io.input.fn === FnAlu.SLL) -> (io.input.a << tb),
-      (io.input.fn === FnAlu.SRL) -> (io.input.a >> tb),
-      (io.input.fn === FnAlu.SRA) -> {
-        val ai = io.input.a.asSInt
-        val ri = ai >> tb
+  io.result := MuxLookup(io.input.fn, 0.U)(Seq(
+    FnAlu.SLL -> (io.input.a << tb),
+    FnAlu.SRL -> (io.input.a >> tb),
+    FnAlu.SRA -> {
+      val ai = io.input.a.asSInt
+      val ri = ai >> tb
 
-        ri.asUInt
-      }
-    )
-  )
+      ri.asUInt
+    }
+  ))
 
 }
 
