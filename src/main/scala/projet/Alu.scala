@@ -64,24 +64,25 @@ class CompSignals extends Bundle {
 class Comp extends Module {
 
   val io = IO(new Bundle {
-    val input   = new AluInput()
-    val result  = Output(UInt(32.W))
-    val signals = new CompSignals // signals for cond branch
+    val input  = new AluInput()
+    val result = Output(UInt(32.W))
+    // signals for emition for cond branch
+    val less  = Output(Bool()) // Strict less than (signed)
+    val uless = Output(Bool()) // Strict less that (not signed)
   })
 
   val ai = io.input.a.asSInt
   val bi = io.input.b.asSInt
 
   // We set the condition for cond branch.
-  io.signals.eq    := (io.input.a === io.input.b)
-  io.signals.less  := (ai < bi)
-  io.signals.uless := (io.input.a < io.input.b)
+  io.less  := (ai < bi)
+  io.uless := (io.input.a < io.input.b)
 
   when(io.input.fn === FnAlu.SLT) {
-    io.result := Mux(io.signals.less, 1.U(32.W), 0.U(32.W))
+    io.result := Mux(io.less, 1.U(32.W), 0.U(32.W))
   }.otherwise {
     io.result := Mux(
-      io.signals.uless,
+      io.uless,
       1.U(32.W),
       0.U(32.W)
     )
@@ -131,7 +132,8 @@ class Alu extends Module {
   shift.io.input  := io.input
 
   // default value
-  io.result := 0.U(32.W)
+  io.result     := 0.U(32.W)
+  io.signals.eq := false.B
 
   switch(io.input.fn) {
     is(FnAlu.ADD) {
@@ -139,6 +141,11 @@ class Alu extends Module {
     }
     is(FnAlu.SUB) {
       io.result := addsub.io.result
+      // Hack, when branching, we use sub for equality check
+      // because SUB is already made in hardware.
+      // We compare with 0 instead of adding equality signal
+      // (io.input.a === io.input.b).
+      io.signals.eq := addsub.io.result === 0.U
     }
     is(FnAlu.SLT) {
       io.result := comp.io.result
@@ -166,6 +173,7 @@ class Alu extends Module {
     }
   }
 
-  io.signals := comp.io.signals
-
+  // We use those precalculted signals for less and uless
+  io.signals.less  := comp.io.less
+  io.signals.uless := comp.io.uless
 }

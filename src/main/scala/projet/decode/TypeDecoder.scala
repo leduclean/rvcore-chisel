@@ -189,6 +189,7 @@ object TypeB {
     ctrl.pc.isBranchInstr := true.B
     ctrl.alu.aSel         := AluAMuxSel.RFA
     ctrl.alu.bSel         := AluBMuxSel.RFB
+    ctrl.alu.fn           := FnAlu.SUB
 
     // We cast the func code into Fn Alu type.
     val (ty, valid) = BranchType.safe(func3(instr))
