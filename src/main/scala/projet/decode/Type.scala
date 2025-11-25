@@ -289,10 +289,10 @@ object TypeCsr {
     data := 0.U.asTypeOf(new DecodeData)
 
     // Data
-    data.rw  := getRd(instr)
-    data.rs1 := getRs1(instr)
-    data.imm := getImm(instr)
-    data.csr := getCsr(instr)
+    data.rw      := getRd(instr)
+    data.rs1     := getRs1(instr)
+    data.imm     := getImm(instr)
+    data.csrAddr := getCsr(instr)
 
     // Control
     val f3 = func3(instr)
