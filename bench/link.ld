@@ -39,7 +39,7 @@ SECTIONS
   .bss ALIGN(4) : {
     PROVIDE(_bss_start = .);
     *(.sbss .sbss.*) *(.bss .bss.*)
-    PROVIDE(_bss_end = .);
+    PROVIDE(_bss_end = ALIGN(4));
   } >datamem AT>datamem :bss
 
   PROVIDE(_memory_start = ORIGIN(datamem));

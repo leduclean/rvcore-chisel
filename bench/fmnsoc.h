@@ -20,6 +20,26 @@
 #define CLINT_TIMER_HI                  0x0200bffc
 #define CLINT_TIMER_LOW                 0x0200bff8
 
+// PLIC (Platform-Level Interrupt Controller)
+#define PLIC_BASE       0x0c000000
+#define PLIC_SOURCE     PLIC_BASE
+#define PLIC_PENDING    (PLIC_BASE + 0x1000)
+#define PLIC_ENABLE     (PLIC_BASE + 0x2000)
+#define PLIC_TARGET     (PLIC_BASE + 0x3000)
+#define PLIC_IRQ_CLAIM  (PLIC_BASE + 0x200004)
+
+// IRQ Machine-level
+#define IRQ_M_EXT 11
+#define IRQ_M_TMR 7
+#define IRQ_M_SWR 3
+
+// MSTATUS bits
+#define MSTATUS_MIE 0x00000008
+
+// Interruption bouton
+#define PLIC_IRQ_BTN 1
+
+
 // Vga 320x200, 8 bits par pixels
 #define DISPLAY_WIDTH                   320
 #define DISPLAY_HEIGHT                  240

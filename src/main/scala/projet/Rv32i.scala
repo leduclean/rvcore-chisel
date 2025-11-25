@@ -19,6 +19,9 @@ class ExWbPipelineData extends Bundle {
 class Rv32i(sim: Boolean = true) extends Module {
 
   val io = IO(new Bundle {
+    val meip      = Input(Bool())
+    val mtip      = Input(Bool())
+    val msip      = Input(Bool())
     val ibus      = Flipped(new BusInterface)
     val dbus      = Flipped(new BusInterface)
     val x31       = Output(UInt(32.W))

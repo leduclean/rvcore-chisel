@@ -23,6 +23,7 @@ class BusInterconnect extends Module {
     val dmem   = Flipped(new BusInterface) // et plusieurs esclaves
     val ldip   = Flipped(new BusInterface)
     val clnt   = Flipped(new BusInterface)
+    val plic   = Flipped(new BusInterface)
     val vmem   = Flipped(new BusInterface)
   })
 
@@ -40,10 +41,13 @@ class BusInterconnect extends Module {
   val DMEM_SIZE = 0x00010000L.U
 
   val LDIP_BASE = 0x30000000L.U
-  val LDIP_SIZE = 0x00000004L.U
+  val LDIP_SIZE = 0x00000008L.U
 
   val CLNT_BASE = 0x02000000L.U
   val CLNT_SIZE = 0x0000c000L.U
+
+  val PLIC_BASE = 0x0c000000L.U
+  val PLIC_SIZE = 0x01000000L.U
 
   val VMEM_BASE = 0x80000000L.U // Mémoire vidéo dual port
   val VMEM_SIZE = 0x00020000L.U
@@ -51,25 +55,30 @@ class BusInterconnect extends Module {
   val is_dmem = addr >= DMEM_BASE && addr < (DMEM_BASE + DMEM_SIZE)
   val is_ldip = addr >= LDIP_BASE && addr < (LDIP_BASE + LDIP_SIZE)
   val is_clnt = addr >= CLNT_BASE && addr < (CLNT_BASE + CLNT_SIZE)
+  val is_plic = addr >= PLIC_BASE && addr < (PLIC_BASE + PLIC_SIZE)
   val is_vmem = addr >= VMEM_BASE && addr < (VMEM_BASE + VMEM_SIZE)
 
   // On connecte directement ce qui doit l'être en faisant l'hypothèse que
   io.dmem.en := io.master.en && is_dmem
   io.ldip.en := io.master.en && is_ldip
   io.clnt.en := io.master.en && is_clnt
+  io.plic.en := io.master.en && is_plic
   io.vmem.en := io.master.en && is_vmem
   // la chose connectée à ses adresses qui commencent à zéro
   io.dmem.addr  := io.master.addr - DMEM_BASE
   io.ldip.addr  := io.master.addr - LDIP_BASE
   io.clnt.addr  := io.master.addr - CLNT_BASE
+  io.plic.addr  := io.master.addr - PLIC_BASE
   io.vmem.addr  := io.master.addr - VMEM_BASE
   io.dmem.wdata := io.master.wdata
   io.ldip.wdata := io.master.wdata
   io.clnt.wdata := io.master.wdata
+  io.plic.wdata := io.master.wdata
   io.vmem.wdata := io.master.wdata
   io.dmem.be    := io.master.be
   io.ldip.be    := io.master.be
   io.clnt.be    := io.master.be
+  io.plic.be    := io.master.be
   io.vmem.be    := io.master.be
 
   // On doit décaler d'un cycle (latence de l'accès mémoire)
@@ -77,6 +86,7 @@ class BusInterconnect extends Module {
   val is_pdmem = RegNext(is_dmem)
   val is_pldip = RegNext(is_ldip)
   val is_pclnt = RegNext(is_clnt)
+  val is_pplic = RegNext(is_plic)
   val is_pvmem = RegNext(is_vmem)
 
   io.master.rdata := MuxCase(
@@ -85,6 +95,7 @@ class BusInterconnect extends Module {
       is_pdmem -> io.dmem.rdata,
       is_pldip -> io.ldip.rdata,
       is_pclnt -> io.clnt.rdata,
+      is_pplic -> io.plic.rdata,
       is_pvmem -> io.vmem.rdata
     )
   )

@@ -2,7 +2,7 @@ COMMON_DIR  := common
 
 TOCLEAN = $(filter %log %.jou %.rpt %.mmi %.dcp %.csv\
                    %.wdb vivado% updatemem% usage_statistics_webtalk%,$(wildcard *))
-TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit
+TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit $(MEM_DIR)
 
 # macro de verbosité
 VERB     := 0
@@ -19,6 +19,7 @@ check_vars = $(foreach v, $1, $(if $(filter undefined, $(origin $v)),\
 			$(MAKE) --no-print-directory help; \
 			exit 1; \
 		fi;))
+
 
 all: help
 
@@ -54,9 +55,9 @@ OBJDUMP := $(PREFIX)objdump
 OBTOMEM := common/objtomem.awk
 
 ## Flags
-ASFLAGS       :=-march=rv32i -mabi=ilp32 -ffreestanding -nostdlib -T $(BENCH_DIR)/link.ld
+ASFLAGS       :=-march=rv32i_zicsr -mabi=ilp32 -ffreestanding -nostdlib -T $(BENCH_DIR)/link.ld
 CFLAGS        :=$(ASFLAGS)
-ELFFLAGS      :=$(ASFLAGS) $(MEM_DIR)/crt.o -Os -fno-unroll-loops
+ELFFLAGS      :=$(ASFLAGS) $(MEM_DIR)/crt_irq.o -Os -fno-unroll-loops
 ODFLAGS       :=-j .text -j .rodata -j .data -s
 
 .PRECIOUS: $(MEM_DIR)/%.elf
@@ -64,10 +65,10 @@ ODFLAGS       :=-j .text -j .rodata -j .data -s
 compile: $(MEM)
 $(MEM_DIR):
 	@mkdir -p $@
-$(MEM_DIR)/crt.o: $(BENCH_DIR)/crt.S |$(MEM_DIR)
+$(MEM_DIR)/crt_irq.o: $(BENCH_DIR)/crt_irq.S |$(MEM_DIR)
 	$(call q,\
-	$(CC) $(CFLAGS) -c $< -o $@ , "  Compilation crt",$@.log)
-$(MEM_DIR)/%.elf: $(BENCH_DIR)/%.c $(MEM_DIR)/crt.o|$(MEM_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@ , "  Compilation crt_irq",$@.log)
+$(MEM_DIR)/%.elf: $(BENCH_DIR)/%.c $(MEM_DIR)/crt_irq.o|$(MEM_DIR)
 	$(call q,\
 	$(CC) $(ELFFLAGS) $< -o $@ , "  Compilation $<",$@.log)
 $(MEM_DIR)/%.elf: $(BENCH_DIR)/%.s |$(MEM_DIR)
@@ -197,7 +198,7 @@ check_driver: check_djtgcfg
 
 check_hw: check_usb check_driver
 
-fpga: download.bit $(COMMON_DIR)/programFPGA.vivado.tcl check_hw ##! Génére le fichier de configuration du FPGA et le programme
+fpga: download.bit $(COMMON_DIR)/programFPGA.vivado.tcl # check_hw ##! Génére le fichier de configuration du FPGA et le programme
 	@$(call check_vars,XILINX_VIVADO)
 	$(call q, \
 	    $(XILINX_PREFIX)vivado -nolog -nojournal -mode batch -source $(COMMON_DIR)/programFPGA.vivado.tcl -nolog -nojournal \

@@ -40,6 +40,7 @@ class ZzTop(file: String = "", sim: Boolean = true) extends Module {
     val dmem         = Module(new IDMem(sim, 16, file))
     val ldip         = Module(new LedIp)
     val clnt         = Module(new CLint)
+    val plic         = Module(new Plic)
 
     dmem.io.clki := clkg.io.clk_out1 // Ou clock, non ?
     dmem.io.clkd := clkg.io.clk_out1 //
@@ -59,6 +60,7 @@ class ZzTop(file: String = "", sim: Boolean = true) extends Module {
     interconnect.io.dmem <> dmem.io.dbus
     interconnect.io.ldip <> ldip.io.bus
     interconnect.io.clnt <> clnt.io.bus
+    interconnect.io.plic <> plic.io.bus
     interconnect.io.vmem <> vmem.io.dbus
 
     // connexion ad-hoc pour le bus d'instructions
@@ -70,6 +72,11 @@ class ZzTop(file: String = "", sim: Boolean = true) extends Module {
     io.r  := vgad.io.r
     io.g  := vgad.io.g
     io.b  := vgad.io.b
+    // connexion des interruptions
+    core.io.mtip := clnt.io.mtip
+    core.io.msip := clnt.io.msip
+    plic.io.irq  := ldip.io.irq
+    core.io.meip := plic.io.meip
   }
 
 }
