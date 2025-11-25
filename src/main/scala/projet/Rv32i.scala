@@ -14,7 +14,7 @@ import projet.decode.Decode
 // stage to the write back stage.
 class ExWbPipelineData extends Bundle {
   val rd    = UInt(5.W)  // Write destination register
-  val value = UInt(32.W) // result from Alu or IMM extracted in EX
+  val value = UInt(32.W) // result from Alu or IMM or PC4 extracted in EX
 }
 
 class Rv32i(sim: Boolean = true) extends Module {
@@ -88,7 +88,10 @@ class Rv32i(sim: Boolean = true) extends Module {
 
   val exOutput = MuxLookup(controls.wb.wbSel, alu.io.result)(Seq(
     WbMuxSel.ALU -> alu.io.result,
-    WbMuxSel.IMM -> decodeData.imm
+    WbMuxSel.IMM -> decodeData.imm,
+    // Jump case, we use Alu result for jump target
+    // and we hardcode the pc + 4 to write back in rd.
+    WbMuxSel.PC4 -> (pcReg + 4.U)
   ))
 
   // We pipeline rd from
@@ -103,11 +106,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   fetch.io.branchTaken  := branch.io.branchTaken
   fetch.io.branchTarget := pcReg + decodeData.imm
 
-  fetch.io.jumpTarget   := Mux(
-    controls.pc.relativeJump,
-    pcReg + decodeData.offset,
-    rs1ByPass + decodeData.offset
-  ) // Relative jump is `jal`
+  fetch.io.jumpTarget := alu.io.result
 
   // Connect control signals.
   fetch.io.ctrl <> controls.pc

@@ -5,11 +5,10 @@ import chisel3.util._
 import projet.Control
 
 class DecodeData extends Bundle {
-  val rw     = UInt(5.W)  // Write back destination
-  val rs1    = UInt(32.W) // Register adress 1
-  val rs2    = UInt(32.W) // Register adress 2
-  val imm    = UInt(32.W) // Extracted imm
-  val offset = UInt(32.W) // Offset for unconditional jumps
+  val rw  = UInt(5.W)  // Write back destination
+  val rs1 = UInt(32.W) // Register adress 1
+  val rs2 = UInt(32.W) // Register adress 2
+  val imm = UInt(32.W) // Extracted imm
 }
 
 // This module will be used for the whole DecodeExecMem pipeline stage.

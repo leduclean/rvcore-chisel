@@ -35,14 +35,13 @@ class ControlMem extends Bundle {
 }
 
 object WbMuxSel extends ChiselEnum {
-  val IMM, ALU, MEM, INV = Value
+  val IMM, ALU, MEM, PC4 = Value
 }
 
 // Controls signals for PC in fetch stage.
 class ControlPc extends Bundle {
   val isBranchInstr = Bool()
   val doJump        = Bool()
-  val relativeJump  = Bool()
   val invalid       = Bool()
 }
 

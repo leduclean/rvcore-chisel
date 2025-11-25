@@ -112,17 +112,13 @@ object TypeI {
       }
 
       is(OpCode.Jalr) {
-        ctrl.alu.aSel := AluAMuxSel.PC
-        ctrl.alu.bSel := AluBMuxSel.IMM
-        ctrl.alu.fn   := FnAlu.ADD
-        ctrl.wb.wbSel := WbMuxSel.ALU
-        ctrl.wb.weRf  := true.B
-        data.imm      := 4.U
-
-        data.offset := getImm(instr)
-
-        ctrl.pc.relativeJump := false.B
-        ctrl.pc.doJump       := true.B
+        ctrl.alu.aSel  := AluAMuxSel.RFA
+        ctrl.alu.bSel  := AluBMuxSel.IMM
+        ctrl.alu.fn    := FnAlu.ADD
+        ctrl.wb.wbSel  := WbMuxSel.PC4
+        ctrl.wb.weRf   := true.B
+        ctrl.pc.doJump := true.B
+        data.imm       := getImm(instr)
       }
     }
     (ctrl, data)
@@ -223,19 +219,15 @@ object TypeJ {
     data := 0.U.asTypeOf(new DecodeData)
 
     // rd = PC + 4
-    data.rw       := getRd(instr)
-    ctrl.alu.aSel := AluAMuxSel.PC
-    ctrl.alu.bSel := AluBMuxSel.IMM
-    ctrl.alu.fn   := FnAlu.ADD
-    ctrl.wb.wbSel := WbMuxSel.ALU
-    ctrl.wb.weRf  := true.B
-    data.imm      := 4.U
+    data.rw  := getRd(instr)
+    data.imm := getImm(instr)
 
-    // (Ugly?) trick to calculate the value to put inside rd using the ALU and the new PC manually
-    data.offset := getImm(instr)
-
-    ctrl.pc.relativeJump := true.B
-    ctrl.pc.doJump       := true.B
+    ctrl.alu.aSel  := AluAMuxSel.PC
+    ctrl.alu.bSel  := AluBMuxSel.IMM
+    ctrl.alu.fn    := FnAlu.ADD
+    ctrl.wb.wbSel  := WbMuxSel.PC4
+    ctrl.wb.weRf   := true.B
+    ctrl.pc.doJump := true.B
 
     (ctrl, data)
   }
