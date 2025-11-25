@@ -8,3 +8,4 @@ typeB
 typeJ
 jalr
 typeS
+bypass
