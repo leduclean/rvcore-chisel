@@ -92,7 +92,6 @@ object TypeI {
       }
 
       is(OpCode.Load) {
-        ctrl.wb.wbSel := WbMuxSel.MEM
         // We use the alu to calculate the Addr
         ctrl.alu.aSel := AluAMuxSel.RFA
         ctrl.alu.bSel := AluBMuxSel.IMM
@@ -103,8 +102,10 @@ object TypeI {
         val (ty, valid) = MemType.safe(func3(instr))
         ctrl.mem.ty := ty
         // We block memory access and RF write if invalid instr.
-        ctrl.mem.en     := true.B && valid
-        ctrl.wb.weRf    := valid
+        ctrl.mem.en   := valid
+        ctrl.wb.weRf  := valid
+        ctrl.wb.wbSel := WbMuxSel.MEM
+
         ctrl.pc.invalid := !valid
 
         data.imm := getImm(instr)
@@ -134,7 +135,7 @@ object TypeR {
   private def func3(instr: UInt): UInt  = instr(14, 12)
   private def func7(instr: UInt): UInt  = instr(30)
 
-  // Decode function for typeR instructions.
+  // Decode function for typeR instru  wb.io.data.memData := mem.io.out
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -228,6 +229,41 @@ object TypeJ {
     ctrl.wb.wbSel  := WbMuxSel.PC4
     ctrl.wb.weRf   := true.B
     ctrl.pc.doJump := true.B
+
+    (ctrl, data)
+  }
+
+}
+
+object TypeS {
+  private def getRs1(instr: UInt): UInt = instr(19, 15)
+  private def getRs2(instr: UInt): UInt = instr(24, 20)
+  private def func3(instr: UInt): UInt  = instr(14, 12)
+  private def getImm(instr: UInt): UInt = Cat(Fill(20, instr(31)), instr(31, 25), instr(11, 7))
+
+  def decode(instr: UInt): (Control, DecodeData) = {
+    val ctrl = Wire(new Control)
+    val data = Wire(new DecodeData)
+
+    ctrl := 0.U.asTypeOf(new Control)
+    data := 0.U.asTypeOf(new DecodeData)
+
+    data.rs1 := getRs1(instr)
+    data.rs2 := getRs2(instr)
+    data.imm := getImm(instr)
+
+    ctrl.alu.aSel := AluAMuxSel.RFA
+    ctrl.alu.bSel := AluBMuxSel.IMM
+    ctrl.alu.fn   := FnAlu.ADD
+    ctrl.wb.wbSel := WbMuxSel.ALU
+
+    val (ty, valid) = MemType.safe(func3(instr))
+    ctrl.mem.ty     := ty
+    ctrl.wb.weRf    := false.B
+    ctrl.pc.invalid := !valid
+
+    ctrl.mem.we := valid
+    ctrl.mem.en := valid
 
     (ctrl, data)
   }

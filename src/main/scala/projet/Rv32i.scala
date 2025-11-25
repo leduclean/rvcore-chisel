@@ -1,8 +1,7 @@
 package projet
 
 import chisel3._
-import chisel3.util.Fill
-import chisel3.util.MuxLookup
+import chisel3.util._
 import projet.AluAMuxSel
 import projet.AluBMuxSel
 import projet.DMem
@@ -118,7 +117,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   mem.io.dbus <> io.dbus
   mem.io.ctrl <> controls.mem
   mem.io.addr := exOutput
-  mem.io.din  := decode.io.data.rs2
+  mem.io.din  := rs2ByPass
 
   // ------------------------- WRITE BACK -------------------------
 

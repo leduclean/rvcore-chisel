@@ -56,16 +56,16 @@ class DMem extends Module {
 
   def makeBE(addr: UInt, ty: MemType.Type): Vec[Bool] = MuxLookup(ty, VecInit.fill(4)(false.B))(Seq(
     MemType.B -> VecInit(Seq(
-      addr(1, 0) === 3.U,
-      addr(1, 0) === 2.U,
+      addr(1, 0) === 0.U,
       addr(1, 0) === 1.U,
-      addr(1, 0) === 0.U
+      addr(1, 0) === 2.U,
+      addr(1, 0) === 3.U
     )),
     MemType.H -> VecInit(Seq(
-      addr(1) === 1.U,
-      addr(1) === 1.U,
       addr(1) === 0.U,
-      addr(1) === 0.U
+      addr(1) === 0.U,
+      addr(1) === 1.U,
+      addr(1) === 1.U
     )),
     MemType.W -> VecInit.fill(4)(true.B)
   ))
@@ -78,6 +78,11 @@ class DMem extends Module {
 
   io.dbus.addr := io.addr
   io.dbus.en   := io.ctrl.en
+
+  when(io.ctrl.we) {
+    io.dbus.wdata := makeWData(io.din, io.ctrl.ty)
+    io.dbus.be    := makeBE(io.addr, io.ctrl.ty)
+  }
 
   // register the mem-type and addr to match pipeline timing
   // when selecting the data.

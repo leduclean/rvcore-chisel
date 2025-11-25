@@ -25,11 +25,14 @@ object OpCode {
 
   // Type J
   val JType = "b1101111".U // JAL
+
+  // Type S
+  val SType = "b0100011".U // SB, SH, SW
 }
 
 // Enum variants for instruction type.
 object InstrType extends ChiselEnum {
-  val TypeU, TypeI, TypeR, TypeB, TypeJ, Invalid, Nop = Value
+  val TypeU, TypeI, TypeR, TypeB, TypeJ, TypeS, Invalid, Nop = Value
 
   def getType(instr: UInt): InstrType.Type = {
     val op = instr(6, 0)
@@ -54,6 +57,9 @@ object InstrType extends ChiselEnum {
       }
       is(OpCode.JType) {
         t := TypeJ
+      }
+      is(OpCode.SType) {
+        t := TypeS
       }
     }
     t
