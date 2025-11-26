@@ -12,8 +12,9 @@ import projet.decode.Decode
 // Bundle to pipe datas from the Decode/Exe
 // stage to the write back stage.
 class ExWbPipelineData extends Bundle {
-  val rd    = UInt(5.W)  // Write destination register
-  val value = UInt(32.W) // result from Alu or IMM or PC4 extracted in EX
+  val rd      = UInt(5.W)  // Write destination register
+  val value   = UInt(32.W) // result from Alu or IMM or PC4 extracted in EX
+  val csrData = UInt(32.W) // readed data from the csr register
 }
 
 class Rv32i(sim: Boolean = true) extends Module {
@@ -33,6 +34,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   val branch = Module(new BranchCond)
   val alu    = Module(new Alu)
   val mem    = Module(new DMem)
+  val csr    = Module(new Csr)
   val rf     = Module(new RFLUTRAM(sim))
   val wb     = Module(new WriteBack)
   val fetch  = Module(new Fetch)
@@ -77,7 +79,10 @@ class Rv32i(sim: Boolean = true) extends Module {
   val wbcontrolsReg = RegNext(controls.wb)
 
   // ByPass value determination: depends on the origin of the previous write back computation.
-  val bypassVal = Mux(wbcontrolsReg.wbSel === WbMuxSel.MEM, mem.io.out, dataExReg.value)
+  val bypassVal = MuxLookup(wbcontrolsReg.wbSel, dataExReg.value)(Seq(
+    WbMuxSel.MEM -> mem.io.out,
+    WbMuxSel.CSR -> dataExReg.csrData
+  ))
 
   // ByPass for rs1 and rs2 (condition: previous instruction was a register write).
   val rs1ByPass = Mux(wbcontrolsReg.weRf && rf.io.ra === dataExReg.rd, bypassVal, rf.io.a)
@@ -100,6 +105,20 @@ class Rv32i(sim: Boolean = true) extends Module {
   dataExReg.rd    := decodeData.rw
   dataExReg.value := exOutput
 
+  // Csr feeding
+  csr.io.ctrl         := controls.csr
+  csr.io.data.csrAddr := decodeData.csrAddr
+  csr.io.data.imm     := decodeData.imm
+  csr.io.data.mepc    := pcReg
+  csr.io.data.rs1     := rs1ByPass
+  dataExReg.csrData   := csr.io.readData
+
+  csr.io.mipSign.meip := io.meip
+  csr.io.mipSign.msip := io.msip
+  csr.io.mipSign.mtip := io.mtip
+
+  val csrPc = csr.io.pcNext
+
   // Branch cond computation.
   branch.io.ty         := controls.branch.ty
   branch.io.aluSignals := alu.io.signals
@@ -110,11 +129,14 @@ class Rv32i(sim: Boolean = true) extends Module {
 
   fetch.io.jumpTarget := alu.io.result
 
+  fetch.io.irqTaken := csr.io.irq
+  fetch.io.irqPc    := csr.io.pcNext
+
   // Connect control signals.
   fetch.io.ctrl <> controls.pc
 
   // If we jump or we branch, the next instruction is going to be a Nop
-  isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken)
+  isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken) | csr.io.irq
 
   // Mem computation
   mem.io.dbus <> io.dbus
@@ -124,7 +146,7 @@ class Rv32i(sim: Boolean = true) extends Module {
 
   // ------------------------- WRITE BACK -------------------------
 
-  wb.io.control <> wbcontrolsReg
+  wb.io.ctrl <> wbcontrolsReg
   wb.io.data.pipe <> dataExReg
   wb.io.data.memData := mem.io.out
 

@@ -1,6 +1,7 @@
 package projet
 
 import chisel3._
+import chisel3.util.MuxLookup
 import projet.ControlWriteback
 import projet.ExWbPipelineData
 
@@ -12,12 +13,17 @@ class WbData extends Bundle {
 class WriteBack extends Module {
 
   val io = IO(new Bundle {
-    val control = Flipped(new ControlWriteback) // Control signals.
+    val ctrl    = Flipped(new ControlWriteback) // Control signals.
     val data    = new WbData()                  // Data to write back.
     val rfWrite = new RFWriteInterface          // Controler of the write input of the RF.
   })
 
-  io.rfWrite.we := io.control.weRf
+  io.rfWrite.we := io.ctrl.weRf
   io.rfWrite.rw := io.data.pipe.rd
-  io.rfWrite.w  := Mux(io.control.wbSel === WbMuxSel.MEM, io.data.memData, io.data.pipe.value)
+
+  io.rfWrite.w := MuxLookup(io.ctrl.wbSel, io.data.pipe.value)(Seq(
+    WbMuxSel.MEM -> io.data.memData,
+    WbMuxSel.CSR -> io.data.pipe.csrData
+  ))
+
 }

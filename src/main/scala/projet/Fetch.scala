@@ -12,6 +12,8 @@ class Fetch extends Module {
     val branchTarget = Input(UInt(32.W))
     val branchTaken  = Input(Bool())
     val jumpTarget   = Input(UInt(32.W))
+    val irqTaken     = Input(Bool())
+    val irqPc        = Input(UInt(32.W))    // Interupt
     val ctrl         = Input(new ControlPc) // Control signals from EX for pc
     val instr        = Output(UInt(32.W))   // Current instruction
     val pcOut        = Output(UInt(32.W))   // Pc of the current decoded instruction
@@ -47,6 +49,7 @@ class Fetch extends Module {
     pc + 4.U,
     Seq(
       io.ctrl.invalid -> 0.U,
+      io.irqTaken     -> (io.irqPc),
       io.ctrl.doJump  -> (io.jumpTarget),
       branchDecision  -> (io.branchTarget)
     )

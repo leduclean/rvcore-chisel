@@ -141,16 +141,16 @@ class Csr extends Module {
   val MIE  = 3
   val MPIE = 7
 
-  // Global machine interupt enable.
+  // Global machine interrupt enable.
   val smie = mstatus(MIE)
 
-  // External machine interupt enable.
+  // External machine interrupt enable.
 
   val meie = mie(11) // machine external interrupts
   val mtie = mie(7)  // machine time interrupts
   val msie = mie(3)  // machine software interrupts
 
-  // External machine interupt state
+  // External machine interrupt state
 
   val meip = mip(11) // machine external interrupts
   val mtip = mip(7)  // machine time interrupts
@@ -182,6 +182,7 @@ class Csr extends Module {
         mtip -> McauseAddr.Timer
       )
     )
+    io.pcNext := handlerAddr
 
     // We set the interrupt enable to false and we keep his value
     // in the pending interrupt enable.
