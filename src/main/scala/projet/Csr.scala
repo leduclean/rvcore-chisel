@@ -28,12 +28,22 @@ object CsrAddr extends ChiselEnum {
   val mip    = Value(0x344.U) // Machine interrupt pending (hardware)
 }
 
-class CsrIO extends Bundle {
-  val ctrl    = Input(new ControlCsr())
-  val meip    = Input(Bool())
+class MachineInteruptPendingSign extends Bundle {
+  val meip = Input(Bool()) // Machine External interrupt pending
+  val msip = Input(Bool()) // Machine Software interrupt pending
+  val mtip = Input(Bool()) // Machine Timer Interrupt pending
+}
+
+class CsrData extends Bundle {
   val csrAddr = Input(UInt(12.W))
   val imm     = Input(UInt(32.W))
   val rs1     = Input(UInt(32.W))
+}
+
+class CsrIO extends Bundle {
+  val mipSign = new MachineInteruptPendingSign()
+  val data    = new CsrData
+  val ctrl    = Input(new ControlCsr())
 }
 
 class Csr extends Module {
@@ -57,16 +67,25 @@ class Csr extends Module {
   val smie = mstatus(3)
 
   // External machine interupt enable.
-  val meie = mie(11)
+
+  val meie = mie(11) // machine external interrupts
+  val mtie = mie(7)  // machine time interrupts
+  val msie = mie(3)  // machine software interrupts
 
   // External machine interupt state
-  val meip = mip(11)
+
+  val meip = mip(11) // machine external interrupts
+  val mtip = mip(7)  // machine time interrupts
+  val msip = mip(3)  // machine software interrupts
 
   // The handler addr is a multiple of 4 so first two bytes should be 0.
   val handlerAddr = Cat(mtvec(31, 2), Fill(2, 0.U))
 
-  val interuptTrap = smie & meie & meip
-  // Write in the pending register
-  mip := Cat(mip(31, 12), io.meip, mip(10, 0))
+  val interuptTrap = (smie & meie & meip) || // external interrupt
+    (smie & mtie & mtip) || // timer interrupt
+    (smie & msie & msip) // software interrupt3
+
+  // Write in the pending register (only hardware)
+  mip := Cat(mip(31, 12), io.mipSign.meip, mip(10, 8), io.mipSign.mtip, mip(6, 4), io.mipSign.msip, mip(2, 0))
 
 }
