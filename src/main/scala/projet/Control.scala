@@ -31,7 +31,6 @@ class ControlBranch extends Bundle {
 class ControlCsr extends Bundle {
   val csrCmd = Output(CsrCmd())
   val useImm = Output(Bool())
-  val mret   = Output(Bool())
 }
 
 // Control signals for MEM from the decode Unit.

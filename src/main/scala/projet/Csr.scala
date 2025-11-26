@@ -4,20 +4,21 @@ import chisel3._
 import chisel3.util.Cat
 import chisel3.util.Fill
 import chisel3.util.MuxCase
+import chisel3.util._
 
 // Enum to cast the Csr command from func3(1,0).
 object CsrCmd extends ChiselEnum {
   val MRET = Value(0.U) // Special command to comeback to before interupt state
-  val W = Value(1.U) // Read and write
-  val S = Value(2.U) // Read and set
-  val C = Value(3.U) // Read and clear
+  val W    = Value(1.U) // Read and write
+  val S    = Value(2.U) // Read and set
+  val C    = Value(3.U) // Read and clear
 }
 
 // Machine-level addr as specified in
 // Table 2.5: Currently allocated RISC-V machine-level CSR addresses.
 // of `riscv-priviledged`
 object CsrAddr extends ChiselEnum {
-  val default = Value(0.U) // Default value to 0.U to use
+  val default = Value(0.U(12.W)) // Default value to 0.U on 12 bits to hard set the enum width to 12
   // Machine Trap Set Up
   val mstatus = Value(0x300.U) // Machine status register (hardware and software)
   val mie     = Value(0x304.U) // Machine interrupt-enable register (software)
@@ -31,10 +32,10 @@ object CsrAddr extends ChiselEnum {
 
 // Machine Cause addr
 // 3.1.15 Machine Cause Register
-object McauseAddr extends ChiselEnum {
-  val External = Value(0x8000000b.U)
-  val Software = Value(0x80000003.U)
-  val Timer    = Value(0x80000007.U)
+object McauseAddr {
+  val External = 0x8000000bL.U
+  val Software = 0x80000003L.U
+  val Timer    = 0x80000007L.U
 }
 
 class MachineInteruptPendingSign extends Bundle {
@@ -44,7 +45,7 @@ class MachineInteruptPendingSign extends Bundle {
 }
 
 class CsrData extends Bundle {
-  val csrAddr = Input(UInt(12.W))
+  val csrAddr = Input(CsrAddr())
   val imm     = Input(UInt(32.W))
   val rs1     = Input(UInt(32.W))
   val mepc      = Input(UInt(32.W))
@@ -56,6 +57,8 @@ class CsrIO extends Bundle {
   val ctrl    = Input(new ControlCsr())
   val irq = Output(Bool())
   val pcNext  = Output(UInt(32.W))
+  val readData  = Output(UInt(32.W))
+
 }
 
 class Csr extends Module {
@@ -72,9 +75,68 @@ class Csr extends Module {
   val mcause = RegInit(0.U(32.W))
   val mip    = RegInit(0.U(32.W))
 
-  // Interrupt Controler
-  // Write in the pending register (only hardware)
-  mip := Cat(mip(31, 12), io.mipSign.meip, mip(10, 8), io.mipSign.mtip, mip(6, 4), io.mipSign.msip, mip(2, 0))
+
+  val regs = Seq(
+    CsrAddr.mstatus -> mstatus,
+    CsrAddr.mie     -> mie,
+    CsrAddr.mtvec   -> mtvec,
+    CsrAddr.mepc    -> mepc,
+    CsrAddr.mcause  -> mcause,
+    CsrAddr.mip     -> mip
+  )
+
+  // Hardware comparison betwen
+  val csrWriteAllowed = MuxLookup(io.data.csrAddr, true.B)(Seq(
+    CsrAddr.mip    -> false.B,
+    CsrAddr.mcause -> false.B,
+    CsrAddr.mepc   -> false.B
+  ))
+
+  val writeVal = Mux(io.ctrl.useImm, io.data.imm, io.data.rs1)
+
+  // Always read
+  io.readData := MuxLookup(io.data.csrAddr, 0.U(32.W))(regs)
+
+  switch(io.ctrl.csrCmd) {
+    is(CsrCmd.W) {
+      // Write if permitted
+      when(csrWriteAllowed) {
+        for ((addr, reg) <- regs) {
+          when(io.data.csrAddr === addr) {
+            reg := writeVal
+          }
+        }
+      }
+    }
+    is(CsrCmd.S) {
+      // Set if permitted
+      // Conditions are decrypted in
+      // 6.1 riscv unprivileged Table 7
+      when(csrWriteAllowed && (io.ctrl.useImm || io.data.rs1 =/= 0.U)) {
+        for ((addr, reg) <- regs) {
+          when(io.data.csrAddr === addr) {
+            reg := reg | writeVal
+          }
+        }
+      }
+    }
+    is(CsrCmd.C) {
+      // Clear if permitted
+      // Conditions are decrypted in
+      // 6.1 riscv unprivileged Table 7
+      when(csrWriteAllowed && (io.ctrl.useImm || io.data.rs1 =/= 0.U)) {
+        for ((addr, reg) <- regs) {
+          when(io.data.csrAddr === addr) {
+            reg := reg & ~writeVal
+          }
+        }
+      }
+    }
+  }
+
+  // Interupt Controler
+	// Write in the pending register (only hardware)
+	mip := Cat(mip(31, 12), io.mipSign.meip, mip(10, 8), io.mipSign.mtip, mip(6, 4), io.mipSign.msip, mip(2, 0))
 
   // Bit position for mstatus machine enable signals.
   val MIE  = 3

@@ -36,6 +36,7 @@ object OpCode {
 // Enum variants for instruction type.
 object InstrType extends ChiselEnum {
   val TypeU, TypeI, TypeR, TypeB, TypeJ, TypeS, TypeCsr, Invalid, Nop = Value
+
   def getType(instr: UInt): InstrType.Type = {
     val op = instr(6, 0)
     val t  = WireDefault(Invalid)

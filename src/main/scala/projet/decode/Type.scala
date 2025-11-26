@@ -6,6 +6,7 @@ import projet.AluAMuxSel
 import projet.AluBMuxSel
 import projet.BranchType
 import projet.Control
+import projet.CsrAddr
 import projet.CsrCmd
 import projet.FnAlu
 import projet.MemType
@@ -242,7 +243,6 @@ object TypeS {
   private def func3(instr: UInt): UInt  = instr(14, 12)
   private def getImm(instr: UInt): UInt = Cat(Fill(20, instr(31)), instr(31, 25), instr(11, 7))
 
-
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -289,10 +289,11 @@ object TypeCsr {
     data := 0.U.asTypeOf(new DecodeData)
 
     // Data
-    data.rw      := getRd(instr)
-    data.rs1     := getRs1(instr)
-    data.imm     := getImm(instr)
-    data.csrAddr := getCsr(instr)
+    data.rw  := getRd(instr)
+    data.rs1 := getRs1(instr)
+    data.imm := getImm(instr)
+    val (csrAddr, validAddr) = CsrAddr.safe(getCsr(instr))
+    data.csrAddr := csrAddr
 
     // Control
     val f3 = func3(instr)
@@ -302,10 +303,10 @@ object TypeCsr {
     val useImm = f3(2)
 
     // We cast the cmd code into Csr Cmd type.
-    val (cmd, valid) = CsrCmd.safe(cmdCode)
+    val (cmd, validCmd) = CsrCmd.safe(cmdCode)
     ctrl.csr.csrCmd := cmd
     ctrl.csr.useImm := useImm
-    ctrl.pc.invalid := !valid
+    ctrl.pc.invalid := !validCmd && validAddr
     (ctrl, data)
   }
 
