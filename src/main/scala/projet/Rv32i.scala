@@ -117,9 +117,18 @@ class Rv32i(sim: Boolean = true) extends Module {
   csr.io.ctrl         := controls.csr
   csr.io.data.csrAddr := decodeData.csrAddr
   csr.io.data.imm     := decodeData.imm
-  csr.io.data.mepc    := pcReg
   csr.io.data.rs1     := rs1ByPass
-  dataExReg.csrData   := csr.io.readData
+
+  csr.io.data.mepc := MuxCase(
+    fetch.io.pcOut,
+    Seq(
+      branchTaken        -> branchTarget,
+      controls.pc.doJump -> jumpTarget
+    )
+  )
+
+  // Pipeline the readed value to write back
+  dataExReg.csrData := csr.io.readData
 
   csr.io.mipSign.meip := io.meip
   csr.io.mipSign.msip := io.msip
@@ -150,7 +159,7 @@ class Rv32i(sim: Boolean = true) extends Module {
   }
 
   // If we jump or we branch, the next instruction is going to be a Nop
-  isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken) | csr.io.irq
+  isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken) | csr.io.irq | controls.csr.mret
 
   // Mem computation
   mem.io.dbus <> io.dbus
