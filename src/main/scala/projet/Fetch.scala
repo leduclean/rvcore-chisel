@@ -1,22 +1,17 @@
 package projet
 
 import chisel3._
-import chisel3.util.MuxCase
 import projet.BusInterface
 
 // Fetch pipeline stage
 class Fetch extends Module {
 
   val io = IO(new Bundle {
-    val ibus         = Flipped(new BusInterface)
-    val branchTarget = Input(UInt(32.W))
-    val branchTaken  = Input(Bool())
-    val jumpTarget   = Input(UInt(32.W))
-    val irqTaken     = Input(Bool())
-    val irqPc        = Input(UInt(32.W))    // Interupt
-    val ctrl         = Input(new ControlPc) // Control signals from EX for pc
-    val instr        = Output(UInt(32.W))   // Current instruction
-    val pcOut        = Output(UInt(32.W))   // Pc of the current decoded instruction
+    val ibus     = Flipped(new BusInterface)
+    val pcSel    = Input(PcSel())
+    val pcTarget = Input(UInt(32.W))
+    val instr    = Output(UInt(32.W)) // Current instruction
+    val pcOut    = Output(UInt(32.W)) // Pc of the current decoded instruction
   })
 
   val pc = RegInit(0.U(32.W))
@@ -40,20 +35,9 @@ class Fetch extends Module {
   // Give the pc from the current instruction.
   io.pcOut := pc
 
-  val branchDecision = io.ctrl.isBranchInstr && io.branchTaken
-
   // Compute next pc after loading an instruction depending
-  // on the control signals from EX.
-  // Handle invalid instruction, jump and branch.
-  val nextPC = MuxCase(
-    pc + 4.U,
-    Seq(
-      io.ctrl.invalid -> 0.U,
-      io.irqTaken     -> (io.irqPc),
-      io.ctrl.doJump  -> (io.jumpTarget),
-      branchDecision  -> (io.branchTarget)
-    )
-  )
+  // on selectors signals from EX.
+  val nextPC = Mux(io.pcSel === PcSel.PC4, pc + 4.U, io.pcTarget)
 
   // Update pc
   pc := nextPC

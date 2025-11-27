@@ -45,11 +45,16 @@ object WbMuxSel extends ChiselEnum {
   val IMM, ALU, MEM, PC4, CSR = Value
 }
 
-// Controls signals for PC in fetch stage.
+// Controls signals for PC from the decode Unit.
 class ControlPc extends Bundle {
   val isBranchInstr = Bool()
   val doJump        = Bool()
   val invalid       = Bool()
+}
+
+// Selector enum for pc decision in fetch.
+object PcSel extends ChiselEnum {
+  val PC4, IRQ, JUMP, BRANCH, INVALID = Value
 }
 
 // Control signals for the WriteBack stage.

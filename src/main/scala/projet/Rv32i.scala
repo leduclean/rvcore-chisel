@@ -105,6 +105,14 @@ class Rv32i(sim: Boolean = true) extends Module {
   dataExReg.rd    := decodeData.rw
   dataExReg.value := exOutput
 
+  // Branch cond computation.
+  branch.io.ty         := controls.branch.ty
+  branch.io.aluSignals := alu.io.signals
+
+  val branchTaken  = (controls.pc.isBranchInstr && branch.io.branchTaken)
+  val branchTarget = pcReg + decodeData.imm
+  val jumpTarget   = alu.io.result
+
   // Csr feeding
   csr.io.ctrl         := controls.csr
   csr.io.data.csrAddr := decodeData.csrAddr
@@ -119,21 +127,27 @@ class Rv32i(sim: Boolean = true) extends Module {
 
   val csrPc = csr.io.pcNext
 
-  // Branch cond computation.
-  branch.io.ty         := controls.branch.ty
-  branch.io.aluSignals := alu.io.signals
+  // Ex -> Fetch feeding
 
-  // Feed fetch PC ctrl with the jump and branch targets.
-  fetch.io.branchTaken  := branch.io.branchTaken
-  fetch.io.branchTarget := pcReg + decodeData.imm
+  // Default case: PC + 4
+  fetch.io.pcSel    := PcSel.PC4
+  fetch.io.pcTarget := pcReg + 4.U
 
-  fetch.io.jumpTarget := alu.io.result
-
-  fetch.io.irqTaken := csr.io.irq
-  fetch.io.irqPc    := csr.io.pcNext
-
-  // Connect control signals.
-  fetch.io.ctrl <> controls.pc
+  // Target priority is:
+  // irq > (jump, branch, invalid) > PC + 4
+  when(csr.io.irq | controls.csr.mret) {
+    fetch.io.pcSel    := PcSel.IRQ
+    fetch.io.pcTarget := csr.io.pcNext
+  }.elsewhen(controls.pc.doJump) {
+    fetch.io.pcSel    := PcSel.JUMP
+    fetch.io.pcTarget := jumpTarget
+  }.elsewhen(branchTaken) {
+    fetch.io.pcSel    := PcSel.BRANCH
+    fetch.io.pcTarget := branchTarget
+  }.elsewhen(controls.pc.invalid) {
+    fetch.io.pcSel    := PcSel.INVALID
+    fetch.io.pcTarget := 0.U
+  }
 
   // If we jump or we branch, the next instruction is going to be a Nop
   isNop := controls.pc.doJump | (controls.pc.isBranchInstr && branch.io.branchTaken) | csr.io.irq
