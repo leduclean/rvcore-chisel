@@ -277,7 +277,7 @@ object TypeCsr {
   private def getRs1(instr: UInt): UInt = instr(19, 15)
   private def func3(instr: UInt): UInt  = instr(14, 12)
   // Zero extension of the imm[4:0]
-  private def getImm(instr: UInt): UInt = instr(19, 15).zext(32)
+  private def getImm(instr: UInt): UInt = instr(19, 15).pad(32)
   private def getCsr(instr: UInt): UInt = instr(31, 20)
   private def isMRET(instr: UInt): UInt = instr(31, 20) === 0x302.U
 

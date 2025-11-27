@@ -9,3 +9,4 @@ typeJ
 jalr
 typeS
 bypass
+csrw
