@@ -10,3 +10,4 @@ jalr
 typeS
 bypass
 csrw
+time_irq
