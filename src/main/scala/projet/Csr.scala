@@ -8,10 +8,10 @@ import chisel3.util._
 
 // Enum to cast the Csr command from func3(1,0).
 object CsrCmd extends ChiselEnum {
-  val MRET = Value(0.U) // Special command to comeback to before interupt state
-  val W    = Value(1.U) // Read and write
-  val S    = Value(2.U) // Read and set
-  val C    = Value(3.U) // Read and clear
+  val Default = Value(0.U) // Default CSR cmd (Do nothing/ Potential MRET)
+  val W       = Value(1.U) // Read and write
+  val S       = Value(2.U) // Read and set
+  val C       = Value(3.U) // Read and clear
 }
 
 // Machine-level addr as specified in
@@ -48,16 +48,16 @@ class CsrData extends Bundle {
   val csrAddr = Input(CsrAddr())
   val imm     = Input(UInt(32.W))
   val rs1     = Input(UInt(32.W))
-  val mepc      = Input(UInt(32.W))
+  val mepc    = Input(UInt(32.W))
 }
 
 class CsrIO extends Bundle {
-  val mipSign = new MachineInteruptPendingSign()
-  val data    = new CsrData
-  val ctrl    = Input(new ControlCsr())
-  val irq = Output(Bool())
-  val pcNext  = Output(UInt(32.W))
-  val readData  = Output(UInt(32.W))
+  val mipSign  = new MachineInteruptPendingSign()
+  val data     = new CsrData
+  val ctrl     = Input(new ControlCsr())
+  val irq      = Output(Bool())
+  val pcNext   = Output(UInt(32.W))
+  val readData = Output(UInt(32.W))
 
 }
 
@@ -74,7 +74,6 @@ class Csr extends Module {
   val mepc   = RegInit(0.U(32.W))
   val mcause = RegInit(0.U(32.W))
   val mip    = RegInit(0.U(32.W))
-
 
   val regs = Seq(
     CsrAddr.mstatus -> mstatus,
@@ -135,8 +134,8 @@ class Csr extends Module {
   }
 
   // Interupt Controler
-	// Write in the pending register (only hardware)
-	mip := Cat(mip(31, 12), io.mipSign.meip, mip(10, 8), io.mipSign.mtip, mip(6, 4), io.mipSign.msip, mip(2, 0))
+  // Write in the pending register (only hardware)
+  mip := Cat(mip(31, 12), io.mipSign.meip, mip(10, 8), io.mipSign.mtip, mip(6, 4), io.mipSign.msip, mip(2, 0))
 
   // Bit position for mstatus machine enable signals.
   val MIE  = 3
@@ -159,16 +158,17 @@ class Csr extends Module {
 
   // The handler addr is a multiple of 4 so first two bytes should be 0.
   val handlerAddr = Cat(mtvec(31, 2), Fill(2, 0.U))
+  val mret        = io.ctrl.mret
 
-  val interruptTrap = (smie & meie & meip) || // external interrupt
+  val interruptTrap = (((smie & meie & meip) || // external interrupt
     (smie & mtie & mtip) || // timer interrupt
-    (smie & msie & msip) // software interrupt3
+    (smie & msie & msip)) // software interrupt3
+    && !mret)
 
   // previous state
-	val interruptTrapPrev = RegNext(interruptTrap, init = false.B)
-	// 1 cycle pulse when interruptTrapPrev goes up
-	val irqPulse = interruptTrap && !interruptTrapPrev
-
+  val interruptTrapPrev = RegNext(interruptTrap, init = false.B)
+  // 1 cycle pulse when interruptTrapPrev goes up
+  val irqPulse = interruptTrap && !interruptTrapPrev
 
   when(irqPulse) {
     // Handle interupt.
@@ -187,7 +187,7 @@ class Csr extends Module {
     // in the pending interrupt enable.
     val swap = Csr.write(mstatus, MIE, false.B)
     mstatus := Csr.write(swap, MPIE, smie)
-  }.elsewhen(io.ctrl.csrCmd === CsrCmd.MRET) {
+  }.elsewhen(mret) {
     // We restore to the inital interrupt enable using the pending enable.
     val swap = Csr.write(mstatus, MIE, mstatus(MPIE))
     // Riscv convention to set back MPIE to 1.

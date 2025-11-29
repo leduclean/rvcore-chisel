@@ -29,7 +29,7 @@ object OpCode {
   // Type S
   val SType = "b0100011".U // SB, SH, SW
 
-  // SYSTEM/ Insntruction type
+  // Csr/ SYSTEM
   val CsrType = "b1110011".U // CSRRW / CSRRS / CSRRC/ CSRRWI / CSRRSI / CSRRCI / MRET
 }
 

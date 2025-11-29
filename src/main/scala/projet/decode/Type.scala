@@ -279,6 +279,7 @@ object TypeCsr {
   // Zero extension of the imm[4:0]
   private def getImm(instr: UInt): UInt = instr(19, 15).zext(32)
   private def getCsr(instr: UInt): UInt = instr(31, 20)
+  private def isMRET(instr: UInt): UInt = instr(31, 20) === 0x302.U
 
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
@@ -304,9 +305,21 @@ object TypeCsr {
 
     // We cast the cmd code into Csr Cmd type.
     val (cmd, validCmd) = CsrCmd.safe(cmdCode)
-    ctrl.csr.csrCmd := cmd
-    ctrl.csr.useImm := useImm
-    ctrl.pc.invalid := !validCmd && validAddr
+
+    val ismret = isMRET(instr)
+    when(cmd === CsrCmd.Default) {
+      // The insruction is either an mret
+      // or an invalid instruction
+      ctrl.csr.mret   := ismret
+      ctrl.pc.invalid := !ismret
+    }.otherwise {
+      ctrl.csr.csrCmd := cmd
+      ctrl.csr.useImm := useImm
+      ctrl.pc.invalid := !validCmd || !validAddr
+      ctrl.wb.weRf    := true.B
+      ctrl.wb.wbSel   := WbMuxSel.CSR
+    }
+
     (ctrl, data)
   }
 

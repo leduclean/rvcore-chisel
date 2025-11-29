@@ -31,6 +31,7 @@ class ControlBranch extends Bundle {
 class ControlCsr extends Bundle {
   val csrCmd = Output(CsrCmd())
   val useImm = Output(Bool())
+  val mret   = Output(Bool())
 }
 
 // Control signals for MEM from the decode Unit.
@@ -41,7 +42,7 @@ class ControlMem extends Bundle {
 }
 
 object WbMuxSel extends ChiselEnum {
-  val IMM, ALU, MEM, PC4 = Value
+  val IMM, ALU, MEM, PC4, CSR = Value
 }
 
 // Controls signals for PC in fetch stage.
