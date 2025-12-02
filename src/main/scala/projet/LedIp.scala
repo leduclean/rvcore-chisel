@@ -17,13 +17,29 @@ class LedIp extends Module {
 
   io.bus.rdata := 0x01ed01ed.U // On lira ça si on lit !
 
-  val dinReg = RegInit(0.U(32.W))
-  val x31Reg = RegNext(io.x31) // On lit x31 en continue
-  val btnReg = RegInit(0.U(32.W))
-  val outReg = RegInit(0.U(32.W))
+  val dinReg      = RegInit(0.U(32.W))
+  val x31Reg      = RegNext(io.x31) // On lit x31 en continue
+  val outReg      = RegInit(0.U(32.W))
+  val capturedBtn = RegInit(0.U(32.W))
 
-  btnReg       := Fill(29, 0.U) ## io.button
-  io.bus.rdata := outReg
+  val regDelay     = RegNext(io.button.orR)
+  val regNextDelay = RegNext(regDelay)
+  val watCnt       = RegInit(0.U(4.W))
+  val bntReg = RegInit(0.U(4.W))
+
+  val btnRaw0 = RegNext(io.button)
+  val btnRaw1 = RegNext(btnRaw0)
+
+  when(!io.button.orR && !regDelay && regNextDelay) {
+    watCnt      := 0xf.U
+    capturedBtn := Fill(29, 0.U) ## btnRaw1
+
+  }.elsewhen(watCnt =/= 0.U) {
+    watCnt := watCnt - 1.U
+  }
+
+  io.irq := watCnt =/= 0.U
+  val currBtn = Fill(29, 0.U) ## io.button
 
   // Le cpu fait une requête
   // On se moque de l'adresse ...
@@ -31,14 +47,12 @@ class LedIp extends Module {
   when(io.bus.en === true.B) {
     when(io.bus.be.asUInt.orR) { // Écriture dans le registre des leds internes
       dinReg := io.bus.wdata
-    }.otherwise { // Lecture des boutons poussoirs, pas de débounce car lus par le soft
-      when(io.bus.addr === 0.U) {
-        outReg := dinReg
-      }.otherwise {
-        outReg := btnReg
-      }
+    }.otherwise { // Lecture des registre de boutons poussoirs, si différent de 0 alors on veut lire 
+    // le bouton du state de l'interruption capturée
+      bntReg := Mux(io.bus.addr === 0.U, currBtn, capturedBtn)
     }
   }
+  io.bus.rdata := bntReg
 
   // On échantillonne la donnée d'entrée en continue
   // C'est soit une donnée venant du registre x31 du
@@ -52,24 +66,4 @@ class LedIp extends Module {
     }
   )
 
-//   On dirait que ça merde en simu (cela dit je n'ai pas compris
-//   la logique, ...
-
-// // Copie du VHDL de IP_ITPin : on s'assure juste que le PLIC
-// // va bien prendre en compte cette interruption
-  val regDelay     = RegNext(io.button.orR)
-  val regNextDelay = RegNext(regDelay)
-  val regIrq       = RegInit(false.B)
-  val watCnt       = RegInit(0.U(4.W))
-
-  when(!io.button.orR && !regDelay && regNextDelay) {
-    watCnt := 0xf.U
-  }.elsewhen(watCnt =/= 0.U) {
-    watCnt := watCnt - 1.U
-  }
-
-  io.irq := Mux(watCnt =/= 0.U, 1.U, 0.U)
-
-  // Pour la simu pour l'instant
-  // io.irq := io.button.orR
 }

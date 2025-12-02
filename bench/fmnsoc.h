@@ -7,6 +7,7 @@
 // Même adresse, leds en écriture, boutons en lecture
 #define LED_LEDS                        0x30000000
 #define LED_PUSHBUTTONS                 0x30000000
+#define LED_IRQ_BUTTON_STATE            0x30000004 // On mets juste une adresse différente de 0 pour ce cas la
 
 // Vga sans configuration possible
 #define FRAMEBUFFER                     0x80000000

@@ -10,6 +10,7 @@ typedef struct color_t color_t;
 
 static volatile color_t *framebuffer  = (volatile color_t *)FRAMEBUFFER;
 static volatile uint32_t *led          = (volatile uint32_t *)LED_LEDS;
+static volatile uint32_t *push_irq     = (volatile uint32_t *)LED_IRQ_BUTTON_STATE;
 static volatile uint32_t *push         = (volatile uint32_t *)LED_PUSHBUTTONS;
 static volatile uint64_t *timer        = (volatile uint64_t *)CLINT_TIMER;
 static volatile uint64_t *timer_cmp    = (volatile uint64_t *)CLINT_TIMER_CMP;
@@ -242,7 +243,7 @@ void handler(uint32_t mcause, uint32_t mie, uint32_t mip)
     if (cause == IRQ_M_EXT) {
         uint32_t v = *claim;
         *claim = v;
-        v = *push;
+        v = *push_irq;
         if (v == 1) {
             cntinsec = 0;
         } else if (v == 2) {
