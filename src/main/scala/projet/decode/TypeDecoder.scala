@@ -12,13 +12,13 @@ import projet.FnAlu
 import projet.MemType
 import projet.WbMuxSel
 
-// We define an object for typeU instruction.
+// Decoder file for each type of instruction.
+
 object TypeU {
   private def getOp(instr: UInt): UInt  = instr(6, 0)
   private def getRd(instr: UInt): UInt  = instr(11, 7)
   private def getImm(instr: UInt): UInt = Cat(instr(31, 12), 0.U(12.W))
 
-  // Decode function for typeU instructions.
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -48,7 +48,6 @@ object TypeU {
 
 }
 
-// We define an object for typeI and TypeIR instructions.
 object TypeI {
   private def getOp(instr: UInt): UInt  = instr(6, 0)
   private def getRd(instr: UInt): UInt  = instr(11, 7)
@@ -61,7 +60,6 @@ object TypeI {
   private def shamt(instr: UInt): UInt = instr(24, 20)
   private def func7(instr: UInt): UInt = instr(30)
 
-  // Decode function for typeI instructions.
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -129,7 +127,6 @@ object TypeI {
 
 }
 
-// We define an object for typeR instruction.
 object TypeR {
   private def getRd(instr: UInt): UInt  = instr(11, 7)
   private def getRs1(instr: UInt): UInt = instr(19, 15)
@@ -137,7 +134,6 @@ object TypeR {
   private def func3(instr: UInt): UInt  = instr(14, 12)
   private def func7(instr: UInt): UInt  = instr(30)
 
-  // Decode function for typeR instru  wb.io.data.memData := mem.io.out
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -167,7 +163,6 @@ object TypeR {
 
 }
 
-// We define an object for typeB instruction.
 object TypeB {
   private def getRs1(instr: UInt): UInt = instr(19, 15)
   private def getRs2(instr: UInt): UInt = instr(24, 20)
@@ -177,7 +172,6 @@ object TypeB {
   private def getImm(instr: UInt): UInt =
     Cat(Fill(19, instr(31)), instr(31), instr(7), instr(30, 25), instr(11, 8), 0.U(1.W))
 
-  // Decode function for typeB instructions.
   def decode(instr: UInt): (Control, DecodeData) = {
     val ctrl = Wire(new Control)
     val data = Wire(new DecodeData)
@@ -205,7 +199,6 @@ object TypeB {
 
 }
 
-// Object for type J instructions
 object TypeJ {
   private def getRd(instr: UInt): UInt = instr(11, 7)
 

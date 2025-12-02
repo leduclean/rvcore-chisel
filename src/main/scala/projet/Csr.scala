@@ -64,6 +64,9 @@ class CsrIO extends Bundle {
 class Csr extends Module {
   val io = IO(new CsrIO())
 
+  // Writer to write to a specific byte
+  def write(old: UInt, bit: Int, value: Bool): UInt = (old & ~(1.U << bit)) | (value.asUInt << bit)
+
   // Registers
 
   // Core status
@@ -84,7 +87,6 @@ class Csr extends Module {
     CsrAddr.mip     -> mip
   )
 
-  // Hardware comparison betwen
   val csrWriteAllowed = MuxLookup(io.data.csrAddr, true.B)(Seq(
     CsrAddr.mip    -> false.B,
     CsrAddr.mcause -> false.B,
@@ -186,13 +188,13 @@ class Csr extends Module {
 
     // We set the interrupt enable to false and we keep his value
     // in the pending interrupt enable.
-    val swap = Csr.write(mstatus, MIE, false.B)
-    mstatus := Csr.write(swap, MPIE, smie)
+    val swap = write(mstatus, MIE, false.B)
+    mstatus := write(swap, MPIE, smie)
   }.elsewhen(mret) {
     // We restore to the inital interrupt enable using the pending enable.
-    val swap = Csr.write(mstatus, MIE, mstatus(MPIE))
+    val swap = write(mstatus, MIE, mstatus(MPIE))
     // Riscv convention to set back MPIE to 1.
-    mstatus   := Csr.write(swap, MPIE, true.B)
+    mstatus   := write(swap, MPIE, true.B)
     io.pcNext := mepc
   }.otherwise {
     // Defaults
@@ -200,13 +202,5 @@ class Csr extends Module {
   }
 
   io.irq := irqPulse
-
-}
-
-object Csr {
-
-  // Writer to write to a specific byte
-  def write(old: UInt, bit: Int, value: Bool): UInt =
-    (old & ~(1.U << bit)) | (value.asUInt << bit)
 
 }

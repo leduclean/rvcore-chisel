@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util.MuxLookup
 import projet.CompSignals
 
-// Branch Type matchin enum.
+// Branch Type matching enum.
 object BranchType extends ChiselEnum {
   val BEQ  = Value(0.U) // 000
   val BNE  = Value(1.U) // 001

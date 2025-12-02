@@ -2,20 +2,19 @@ package projet
 
 import chisel3._
 
-// We use ChiselEnum as a mux to simpify entry sel.
 // Alu mux for A input.
+// (Chisel Enum as a bit wrapper to clarify the meaning of the signal)
 object AluAMuxSel extends ChiselEnum {
   val PC, RFA = Value
-
 }
 
-// We use ChiselEnum as a mux to simpify entry sel
 // Alu mux for B input.
+// (Chisel Enum as a bit wrapper to clarify the meaning of the signal)
 object AluBMuxSel extends ChiselEnum {
   val IMM, RFB = Value
 }
 
-// Control signals from the Decode Unit.
+// Control signals from the Decode Unit for the ALU operation.
 class ControlAlu extends Bundle {
   val aSel = Output(AluAMuxSel())
   val bSel = Output(AluBMuxSel())
@@ -27,14 +26,14 @@ class ControlBranch extends Bundle {
   val ty = Output(BranchType())
 }
 
-// Control signals from the Decode Unit for Csr computation
+// Control signals from Decode Unit for Csr computation
 class ControlCsr extends Bundle {
   val csrCmd = Output(CsrCmd())
   val useImm = Output(Bool())
   val mret   = Output(Bool())
 }
 
-// Control signals for MEM from the decode Unit.
+// Control signals from Decode Unit for Memory operations.
 class ControlMem extends Bundle {
   val ty = Output(MemType())
   val en = Output(Bool())
@@ -45,19 +44,14 @@ object WbMuxSel extends ChiselEnum {
   val IMM, ALU, MEM, PC4, CSR = Value
 }
 
-// Controls signals for PC from the decode Unit.
+// Controls signals from Decode Unit for PC update decision.
 class ControlPc extends Bundle {
   val isBranchInstr = Bool()
   val doJump        = Bool()
   val invalid       = Bool()
 }
 
-// Selector enum for pc decision in fetch.
-object PcSel extends ChiselEnum {
-  val PC4, IRQ, JUMP, BRANCH, INVALID = Value
-}
-
-// Control signals for the WriteBack stage.
+// Control signals from Decode Unit for Write Back stage.
 class ControlWriteback extends Bundle {
   val weRf  = Output(Bool())     // write enable
   val wbSel = Output(WbMuxSel()) // write back selector

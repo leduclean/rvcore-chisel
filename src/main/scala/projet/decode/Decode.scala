@@ -5,6 +5,7 @@ import chisel3.util._
 import projet.Control
 import projet.CsrAddr
 
+// Decoded data from Decode stage.
 class DecodeData extends Bundle {
   val rw      = UInt(5.W)  // Write back destination
   val rs1     = UInt(32.W) // Register adress 1
@@ -13,7 +14,7 @@ class DecodeData extends Bundle {
   val csrAddr = CsrAddr()  // Csr source/dest
 }
 
-// This module will be used for the whole DecodeExecMem pipeline stage.
+// Decode pipeline stage
 class Decode extends Module {
 
   val io = IO(new Bundle {

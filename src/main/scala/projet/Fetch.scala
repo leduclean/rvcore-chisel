@@ -3,6 +3,11 @@ package projet
 import chisel3._
 import projet.BusInterface
 
+// Selector enum for pc decision in fetch.
+object PcSel extends ChiselEnum {
+  val PC4, IRQ, JUMP, BRANCH, INVALID = Value
+}
+
 // Fetch pipeline stage
 class Fetch extends Module {
 
