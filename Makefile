@@ -1,6 +1,6 @@
 COMMON_DIR  := common
 
-TOCLEAN = $(filter %log %.jou %.rpt %.mmi %.dcp %.csv\
+TOCLEAN = $(filter %log %.jou %.rpt %.mmi %.dcp %.csv golden.bit\
                    %.wdb vivado% updatemem% usage_statistics_webtalk%,$(wildcard *))
 TOCLEAN += $(wildcard _*) .Xil out RTL build download.bit $(MEM_DIR)
 
@@ -207,6 +207,6 @@ fpga: download.bit $(COMMON_DIR)/programFPGA.vivado.tcl # check_hw ##! Génére 
 
 ##@ Nettoyage
 TMPREP = /scratch/$(LOGNAME)
-clean: ##! Fais le nettoyage
+clean: ##! Fait le nettoyage
 	$(call q, rm -rf $(TOCLEAN),)
 	@if [ -e $(TMPREP) ] && [ ! -d $(TMPREP) ]; then rm -f $(TMPREP) ;fi
