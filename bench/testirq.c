@@ -279,8 +279,6 @@ int main(void)
 
     /* Configuration du PLIC pour autoriser l'irq 1 (à laquelle sont reliés les boutons) */
     *enable = 1 << PLIC_IRQ_BTN;
-    *target = 0;
-    *(source + 4 * PLIC_IRQ_BTN) = 1;
 
     /* Le timer est lancé dès le démarrage */
     while (1);
