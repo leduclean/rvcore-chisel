@@ -27,7 +27,7 @@ def expectedValuesFromAsm(path: String): Seq[BigInt] = {
 }
 
 def failTrace(msg: String = "Erreur",trace: ListBuffer[String]): Unit = {
-  val prefix = s"🛑 $msg\n" 
+  val prefix = s"🛑 $msg\n"
   val traceStr =
     if (trace.nonEmpty) "Trace:\n" + trace.map("  - " + _).mkString("\n") + "\n"
     else ""
@@ -37,7 +37,7 @@ def failTrace(msg: String = "Erreur",trace: ListBuffer[String]): Unit = {
 def expectNextValue(dut: ZzTop, expected: BigInt, timeout: Int, trace: ListBuffer[String]): Unit = {
   var cycles = 0
   dut.clock.step(12) // Attente d'un cycle proc (12 cycles systeme)
-  // Attendre une écriture dans x31   
+  // Attendre une écriture dans x31
   while (!dut.io.valid_x31.get.peek().litToBoolean && cycles < timeout) {
     dut.clock.step(12) // Attente d'un cycle proc
     cycles += 1
@@ -52,7 +52,7 @@ def expectNextValue(dut: ZzTop, expected: BigInt, timeout: Int, trace: ListBuffe
   } else {
     trace += f"Valeur attendue = 0x$expected%08X, reçue = ⏰"
     failTrace("Simulation bloquée",trace)
-  } 
+  }
 }
 
 
@@ -81,10 +81,23 @@ def expectNextValue(dut: ZzTop, expected: BigInt, timeout: Int, trace: ListBuffe
       simulate(new ZzTop(path,true)) { dut =>
         dut.io.switch.poke(8) // Paramétrage de l'affichage
         dut.io.led.expect(dut.io.led.peek()) // test dummy
-        dut.clock.step(sys.env("CYCLES").toInt)
+
+        // Attente de la moitié du boot
+        dut.clock.step(sys.env("CYCLES").toInt / 2)
+
+        // Appui sur le bouton 0
+        dut.io.push.poke(1)
+        dut.clock.step(36) // attendre un cycle processeur pour voir l'effet
+
+        // Relâchement du bouton
+        dut.io.push.poke(0)
+        dut.clock.step(12)
+
+        // Fin de la simulation
+        dut.clock.step(sys.env("CYCLES").toInt / 2)
       }
     }
-    
+
     s"Test unitaire $name" in testWith(path)
 
   } else {
@@ -92,7 +105,7 @@ def expectNextValue(dut: ZzTop, expected: BigInt, timeout: Int, trace: ListBuffe
     val programs = Files.list(Paths.get(dir)).iterator().asScala.filter(_.toString.endsWith(suffix))
     val p2 = programs.map(path => (path.getFileName.toString.stripSuffix(suffix), path.toString)).toSeq
     val table = Table(("name", "path"), p2: _*)
-  
+
     // Déclaration des tests à partir de la table
     forAll(table) { (name, path) =>
       s"Programme $name" in testWith(path)
