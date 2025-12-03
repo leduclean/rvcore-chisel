@@ -1,0 +1,78 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam ArrowColor Black
+skinparam ArrowThickness 1.2
+skinparam shadowing false
+title RV32I - Control Path
+
+package "Instruction Decode" {
+  component "Decode" as DEC
+}
+
+package "Control Unit (outputs)" {
+  component "Ctrl.ALU\n(aSel,bSel,fn)" as CALU
+  component "Ctrl.MEM\n(en,we,ty)" as CMEM
+  component "Ctrl.WB\n(weRf,wbSel) [pipelined]" as CWB
+  component "Ctrl.PC\n(isBranch,doJump,invalid)" as CPC
+  component "Ctrl.CSR\n(csrCmd,useImm,mret)" as CCS
+  component "Ctrl.Branch\n(ty)" as CBR
+}
+
+package "Execution / PC Logic" {
+  component "ALU" as ALU
+  component "BranchCond" as BR
+  component "CSR" as CSR
+  component "PC Next\nPriority Logic\n(IRQ > JUMP > BRANCH > INVALID > PC4)" as PCSEL
+}
+
+package "Memory" {
+  component "DMem" as DMEM
+}
+
+package "Writeback" {
+  component "WriteBack" as WB
+    component "RFLUTRAM" as RF
+
+}
+
+package "Fetch Stage" {
+  component "PC Reg" as PC
+  component "IMEM" as IMEM
+}
+
+' ---------- Decode -> Controls ----------
+DEC --> CALU
+DEC --> CMEM
+DEC --> CWB
+DEC --> CPC
+DEC --> CCS
+DEC --> CBR
+
+' ---------- Controls -> Units ----------
+CALU --> ALU : aSel,bSel
+CMEM --> DMEM : en,we,ty
+CWB --> WB   : weRf, wbSel
+CPC  --> PCSEL: isBranch,doJump,invalid
+CBR  --> BR   : branchTy
+CCS  --> CSR  : csrCmd,useImm,mret
+
+' ---------- Execution feedback ----------
+ALU --> PCSEL : jumpTarget
+BR  --> PCSEL : branchTaken
+CSR --> PCSEL : irq / mret / pcNext
+
+' ---------- Memory ----------
+/'ALU --> DMEM : addr (exOutput) '/
+/'DMEM --> WB  : memData (io.out)'/
+WB   --> RF   : rfWrite (we, rw, w)
+' --------- Write Back feeding ----
+
+
+
+' ---------- PC / Fetch ----------
+PCSEL --> PC : pc next selection
+PC --> IMEM : addr
+IMEM --> DEC : instr
+
+
+@enduml
